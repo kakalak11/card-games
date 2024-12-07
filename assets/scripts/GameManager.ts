@@ -2,8 +2,8 @@ import { _decorator, Component, error, Node, resources, Sprite, SpriteFrame, UIT
 const { ccclass, property } = _decorator;
 
 const MAX_CARDS = 52;
-const SUITS = ["spades", "diamonds", "clubs", "hearts"];
-const SUITS_SPRITE = { "spades": 5, "diamonds": 4, "clubs": 7, "hearts": 2 };
+const SUITS = ["spade", "diamond", "club", "heart"];
+const SUITS_SPRITE = { "spade": 5, "diamond": 4, "club": 7, "heart": 2 };
 const VALUES = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "A", "J", "Q", "K"];
 
 function getDeck() {

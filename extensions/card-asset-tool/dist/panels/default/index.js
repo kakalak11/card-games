@@ -26,10 +26,21 @@ module.exports = Editor.Panel.define({
             this.$.app.innerHTML = 'Card Assets Tool';
         }
         this.$.buttonConfirm.addEventListener('confirm', () => {
-            const directoryPath = this.$.assetPath.value;
-            (0, main_1.mapNameDir)(directoryPath);
+            var _a;
+            (_a = this.$.buttonConfirm) === null || _a === void 0 ? void 0 : _a.classList.remove("green");
+            this.$.buttonConfirm.innerHTML = "Do it";
+            const assetPath = this.$.assetPath.value;
+            (0, main_1.mapNameDir)(assetPath)
+                .then(() => {
+                var _a;
+                (_a = this.$.buttonConfirm) === null || _a === void 0 ? void 0 : _a.classList.add("green");
+                this.$.buttonConfirm.innerHTML = "Done";
+            })
+                .catch(err => {
+                if (err) {
+                    console.error(err);
+                }
+            });
         });
     },
-    beforeClose() { },
-    close() { },
 });

@@ -4,7 +4,7 @@
     margin: 20px;
 }
 
-#asset-path {
+ui-file {
     margin: 10px 20px;
     width: calc(100% - 40px);
 }

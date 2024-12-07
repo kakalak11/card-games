@@ -25,11 +25,20 @@ module.exports = Editor.Panel.define({
         }
 
         this.$.buttonConfirm!.addEventListener('confirm', () => {
-            const directoryPath = (this.$.assetPath! as any).value;
-            
-            mapNameDir(directoryPath)
+            this.$.buttonConfirm?.classList.remove("green");
+            this.$.buttonConfirm!.innerHTML = "Do it";
+
+            const assetPath = (this.$.assetPath! as any).value;
+            mapNameDir(assetPath)
+                .then(() => {
+                    this.$.buttonConfirm?.classList.add("green");
+                    this.$.buttonConfirm!.innerHTML = "Done";
+                })
+                .catch(err => {
+                    if (err) {
+                        console.error(err);
+                    }
+                });
         });
     },
-    beforeClose() { },
-    close() { },
 });
