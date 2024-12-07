@@ -86,4 +86,5 @@ export function removeFiles(directoryPath = "") {
  * TODO:
  *  - Keep the asset original .meta, prevent engine reimport asset
  *  - Create backup for assets at temp dir
+ *  - Change type .meta of asset to spriteFrame
  */
