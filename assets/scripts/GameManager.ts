@@ -1,3 +1,5 @@
+import { Prefab } from 'cc';
+import { instantiate } from 'cc';
 import { _decorator, Component, error, Node, resources, Sprite, SpriteFrame, UITransform, v3 } from 'cc';
 const { ccclass, property } = _decorator;
 
@@ -40,14 +42,24 @@ export class GameManager extends Component {
 
     @property(Node) cardTable: Node;
     @property(Node) playerDeck: Node;
+    @property(Prefab) cardPrefab: Prefab;
+
+    static instance: GameManager;
+
+    playerHand: any[] = [];
+    selectedHand: any[] = [];
 
     protected start(): void {
+        GameManager.instance = this;
+        this.gameStart();
+    }
+
+    gameStart() {
         const deck = getDeck();
-        console.log(deck);
         let shuffledDeck = deck.slice();
         shuffle(shuffledDeck)
 
-        this.loadDeck(shuffledDeck)
+        return this.loadDeck(shuffledDeck)
             .then((resultDeck) => {
                 let playerHand = [];
                 for (let i = 0; i < MAX_CARDS; i++) {
@@ -63,25 +75,23 @@ export class GameManager extends Component {
                     const position = card.cardNode.getPosition();
                     card.cardNode.setPosition(v3(position.x, 0, position.z));
                 });
-            })
+
+                this.playerHand = playerHand;
+            });
     }
 
     loadDeck(deck) {
         let allPromises = []
         deck.forEach(card => {
             const { value, suit } = card;
-            let assetName = value + "." + SUITS_SPRITE[suit];
-            if (!Number(value) && value !== "A") {
-                assetName = value + SUITS_SPRITE[suit];
-            }
+            let assetName = value + "_" + suit;
             allPromises.push(
                 new Promise((resolve, reject) => {
                     resources.load(`face-cards/${assetName}/spriteFrame`, SpriteFrame, (err, asset) => {
                         if (err) return reject(error(err.message));
 
-                        const node = new Node();
-                        node.addComponent(UITransform);
-                        node.addComponent(Sprite).spriteFrame = asset;
+                        const node = instantiate(this.cardPrefab);
+                        node.getComponent(Sprite).spriteFrame = asset;
                         node.setParent(this.cardTable);
 
                         card.cardNode = node;
@@ -101,7 +111,21 @@ export class GameManager extends Component {
             })
     }
 
+    onSelectCard(card) {
+        const cardInfo = this.playerHand.find(({ cardNode }) => cardNode === card);
+        const isSelected = this.selectedHand.find(({ cardNode }) => cardNode === card);
+        if (!cardInfo || isSelected) return;
 
+        this.selectedHand.push(cardInfo);
+        console.log("Selected hand: ", this.selectedHand);
+    }
+
+    onUnselectCard(card) {
+        const selectedIndex = this.selectedHand.findIndex(({ cardNode }) => cardNode === card);
+        if (selectedIndex == -1) return;
+        this.selectedHand.splice(selectedIndex, 1);
+        console.log("Selected hand: ", this.selectedHand);
+    }
 
 }
 
