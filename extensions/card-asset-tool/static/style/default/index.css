@@ -1,0 +1,14 @@
+#app {
+    color: var(--color-normal-contrast-weakest);
+    text-align: center;
+    margin: 20px;
+}
+
+#asset-path {
+    margin: 10px 20px;
+    width: calc(100% - 40px);
+}
+
+.button-layout {
+    margin: auto 20px;
+}
