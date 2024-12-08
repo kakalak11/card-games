@@ -1,6 +1,7 @@
 import { _decorator, Component, Label, Node, resources, SpriteFrame, error, instantiate, Sprite } from 'cc';
-import { BlackJackGameManager } from './BlackJackGameManager';
+import { BlackJackGameManager, TURN_DURATION } from './BlackJackGameManager';
 import { checkBlackJack, getTotalHandValue } from "./utils";
+import { TimerManager } from './TimerManager';
 const { ccclass, property } = _decorator;
 
 @ccclass('BlackJackDealerManager')
@@ -91,7 +92,7 @@ export class BlackJackDealerManager extends Component {
         this.updateHand(this._dealerHand);
         this.loadHand(this._dealerHand)
             .then(() => {
-                this.nextMove();
+                TimerManager.instance._scheduleOnce(this.nextMove.bind(this), TURN_DURATION);
             });
     }
 

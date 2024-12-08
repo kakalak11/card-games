@@ -40,7 +40,7 @@ export class TimerManager extends Component {
             return;
         }
 
-        this.label.string = "Time: " + Math.abs(this._delay + 1).toFixed(0);
+        this.label.string = "Time: " + Math.abs(this._delay).toFixed(0);
     }
 
 }
