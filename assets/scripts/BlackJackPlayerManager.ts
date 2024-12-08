@@ -21,7 +21,6 @@ export class BlackJackPlayerManager extends Component {
     @property(ToastManager) toast: ToastManager;
 
     hasBlackJack: boolean;
-    isBust: boolean;
     playerHand: any[] = [];
     playerHandValue: number = 0;
 
@@ -68,7 +67,6 @@ export class BlackJackPlayerManager extends Component {
             BlackJackGameManager.instance.endPlayerTurn();
         } else if (this.playerHandValue > 21) {
             this.disableButtons();
-            this.isBust = true;
             this.handInfo.string += `\nYou are busted !`;
             BlackJackGameManager.instance.endPlayerTurn();
         }
@@ -121,7 +119,6 @@ export class BlackJackPlayerManager extends Component {
     reset() {
         this.playerTable.removeAllChildren();
         this.hasBlackJack = false;
-        this.isBust = false;
         this.playerHand = [];
         this.enableButtons();
     }
