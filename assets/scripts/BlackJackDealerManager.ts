@@ -2,6 +2,7 @@ import { _decorator, Component, Label, Node, resources, SpriteFrame, error, inst
 import { BlackJackGameManager, TURN_DURATION } from './BlackJackGameManager';
 import { checkBlackJack, getTotalHandValue } from "./utils";
 import { TimerManager } from './TimerManager';
+import { CardManager } from './CardManager';
 const { ccclass, property } = _decorator;
 
 @ccclass('BlackJackDealerManager')
@@ -54,7 +55,6 @@ export class BlackJackDealerManager extends Component {
         const isBlackJack = checkBlackJack(playerHand);
 
         if (isBlackJack) {
-            this.dealerInfo.string += `\nWow! Black Jack !!!`;
             this.hasBlackJack = true;
         } else if (this.dealerHandValue > 21) {
             this.dealerInfo.string += `\nDealer are busted !`;
@@ -63,9 +63,14 @@ export class BlackJackDealerManager extends Component {
 
     dealOneCardDealer() {
         this.dealerHand.push(BlackJackGameManager.instance.dealOneCard());
-        this.updateHand(this.dealerHand);
         this.loadHand(this.dealerHand)
             .then(() => {
+                if (this.dealerHand.length == 2) {
+                    this.dealerHand[1]!
+                        .cardNode
+                        .getComponent(CardManager).showBackCard();
+                }
+                this.updateHand(this.dealerHand);
                 this._dealerTurn = false;
                 this.nextMove();
             });
@@ -75,12 +80,18 @@ export class BlackJackDealerManager extends Component {
         if (this._dealerTurn) {
             if (this.dealerHand.length < 2) {
                 this.dealOneCardDealer();
+
             } else {
+                this.dealerHand[1]!
+                    .cardNode
+                    .getComponent(CardManager).showFaceCard();
+
+                this.updateHand(this.dealerHand);
                 if (this.dealerHandValue < 17) {
                     this.dealerHit();
                 } else {
                     this.dealerInfo.string += `\nDealer End Turn !`;
-                    BlackJackGameManager.instance.endDealerTurn(true)
+                    BlackJackGameManager.instance.endDealerTurn(true);
                 }
             }
         } else {
@@ -91,9 +102,9 @@ export class BlackJackDealerManager extends Component {
     dealerHit() {
         this.dealerHand.push(BlackJackGameManager.instance.dealOneCard());
 
-        this.updateHand(this.dealerHand);
         this.loadHand(this.dealerHand)
             .then(() => {
+                this.updateHand(this.dealerHand);
                 TimerManager.instance._scheduleOnce(this.nextMove.bind(this), TURN_DURATION);
             });
     }

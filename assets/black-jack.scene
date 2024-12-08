@@ -1379,10 +1379,10 @@
   {
     "__type__": "cc.ClickEvent",
     "target": {
-      "__id__": 5
+      "__id__": 9
     },
     "component": "",
-    "_componentId": "2dad6voBrdLPpEe9NYJHrTr",
+    "_componentId": "8888astadlBg6heRjsrSVg2",
     "handler": "onHit",
     "customEventData": ""
   },
@@ -1682,10 +1682,10 @@
   {
     "__type__": "cc.ClickEvent",
     "target": {
-      "__id__": 5
+      "__id__": 9
     },
     "component": "",
-    "_componentId": "2dad6voBrdLPpEe9NYJHrTr",
+    "_componentId": "8888astadlBg6heRjsrSVg2",
     "handler": "onEndTurn",
     "customEventData": ""
   },
@@ -2510,18 +2510,12 @@
     "cardTable": {
       "__id__": 6
     },
-    "playerTable": {
-      "__id__": 10
-    },
     "cardPrefab": {
       "__uuid__": "9892773d-68c5-4d52-bf77-fc69b4fdd6ee",
       "__expectedType__": "cc.Prefab"
     },
     "gameRestartButton": {
       "__id__": 25
-    },
-    "handInfo": {
-      "__id__": 16
     },
     "dealer": {
       "__id__": 48

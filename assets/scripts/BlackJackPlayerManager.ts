@@ -103,8 +103,11 @@ export class BlackJackPlayerManager extends Component {
     onHit() {
         this.playerHand.push(BlackJackGameManager.instance.dealOneCard());
 
-        this.updateHand(this.playerHand);
-        this.loadHand(this.playerHand);
+        
+        this.loadHand(this.playerHand)
+            .then(() => {
+                this.updateHand(this.playerHand);
+            });
     }
 
     onEndTurn() {

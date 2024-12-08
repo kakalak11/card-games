@@ -1,5 +1,5 @@
-import { Canvas } from "cc";
-import { Node } from "cc";
+import { Canvas, Node } from "cc";
+import { CardManager } from "./CardManager";
 
 export const MAX_CARDS = 52;
 export const SUITS = ["spade", "diamond", "club", "heart"];
@@ -22,6 +22,7 @@ export function getDeck() {
 
 export function getTotalHandValue(playerHand) {
     return playerHand.reduce((acc, curr) => {
+        if (curr.cardNode.getComponent(CardManager).isShowingBackCard()) return acc;
         return acc + curr.numberValue;
     }, 0)
 }
