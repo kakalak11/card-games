@@ -1,4 +1,5 @@
 import { Prefab } from 'cc';
+import { Label } from 'cc';
 import { Button } from 'cc';
 import { instantiate } from 'cc';
 import { _decorator, Component, error, Node, resources, Sprite, SpriteFrame, UITransform, v3 } from 'cc';
@@ -17,6 +18,7 @@ function getDeck() {
             let card = {
                 value: VALUES[valueIndex],
                 suit: SUITS[suitIndex],
+                numberValue: Number(VALUES[valueIndex]) || 10,
                 cardPower
             };
             deckOfCards.push(card);
@@ -24,6 +26,12 @@ function getDeck() {
     }
     // console.log(deckOfCards.slice().sort((a,b) => a.cardPower - b.cardPower));
     return deckOfCards
+}
+
+function getTotalHandValue(playerHand) {
+    return playerHand.reduce((acc, curr) => {
+        return acc + curr.numberValue;
+    }, 0)
 }
 
 function shuffle(deck) {
@@ -45,13 +53,17 @@ export class GameManager extends Component {
     @property(Node) cardTable: Node;
     @property(Node) playerDeck: Node;
     @property(Prefab) cardPrefab: Prefab;
-    @property(Button) playHandButton: Button;
+    @property(Button) hitButton: Button;
+    @property(Button) endButton: Button;
+    @property(Label) handInfo: Label;
 
     static instance: GameManager;
 
     playerHand: any[] = [];
     selectedHand: any[] = [];
     cardDeck: any[] = [];
+    totalValue: number = 0;
+    isBust: boolean;
 
     protected start(): void {
         GameManager.instance = this;
@@ -59,29 +71,28 @@ export class GameManager extends Component {
     }
 
     gameStart() {
+        this.hitButton.interactable = true;
+        this.endButton.interactable = true;
+
         const deck = getDeck();
         shuffle(deck)
-        this.cardDeck = deck;
 
         return this.loadDeck(deck)
             .then((resultDeck) => {
                 let playerHand = [];
+                this.cardDeck = resultDeck;
+
                 for (let i = 0; i < MAX_CARDS; i++) {
-                    if (i % 4 == 0) {
-                        playerHand.push(resultDeck.pop());
+                    if (playerHand.length < 2) {
+                        playerHand.push(this.cardDeck.pop());
                     } else {
-                        const removedCard = resultDeck.pop();
-                        removedCard.cardNode.destroy();
+                        break;
                     }
                 }
-                this.findHandBestCombinations(playerHand);
+
                 playerHand.forEach(card => {
                     card.cardNode.setParent(this.playerDeck);
-                    card.cardNode.emit("INIT");
-                    const position = card.cardNode.getPosition();
-                    card.cardNode.setPosition(v3(position.x, 0, position.z));
                 });
-
                 this.playerHand = playerHand;
             });
     }
@@ -112,46 +123,28 @@ export class GameManager extends Component {
             })
     }
 
-    onSelectCard(card) {
-        const cardInfo = this.playerHand.find(({ cardNode }) => cardNode === card);
-        const isSelected = this.selectedHand.find(({ cardNode }) => cardNode === card);
-        if (!cardInfo || isSelected) return;
+    onHit() {
+        const card = this.cardDeck.pop();
 
-        this.selectedHand.push(cardInfo);
-        console.log("Selected hand: ", this.selectedHand);
+        card.cardNode.setParent(this.playerDeck);
+        this.playerHand.push(card);
+        this.updateHand(this.playerHand);
     }
 
-    onUnselectCard(card) {
-        const selectedIndex = this.selectedHand.findIndex(({ cardNode }) => cardNode === card);
-        if (selectedIndex == -1) return;
+    onEndTurn() {
+        this.hitButton.interactable = false;
 
-        this.selectedHand.splice(selectedIndex, 1);
-        console.log("Selected hand: ", this.selectedHand);
     }
 
-    onPlayHand() {
-        if (!this.selectedHand.length) {
-            console.log("No selected hand to play");
-            return;
+    updateHand(playerHand) {
+        this.totalValue = getTotalHandValue(playerHand);
+        this.handInfo.string = `Total value: ${this.totalValue}`;
+        if (this.totalValue > 21) {
+            this.isBust = true;
+            this.hitButton.interactable = false;
+            this.endButton.interactable = false;
+            this.handInfo.string += `\nYou are busted !`;
         }
-
-        this.selectedHand.forEach(card => {
-            const { cardNode } = card;
-            cardNode.setParent(this.cardTable);
-        });
-
-        this.selectedHand = [];
-        this.playHandButton.interactable = false;
-        this.scheduleOnce(this.nextTurn, 1);
-    }
-
-    nextTurn() {
-        this.playHandButton.interactable = true;
-        this.cardTable.removeAllChildren();
-    }
-
-    findHandBestCombinations(hand) {
-
     }
 
 }

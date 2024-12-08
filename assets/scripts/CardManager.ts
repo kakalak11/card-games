@@ -8,6 +8,10 @@ export class CardManager extends Component {
     isSelected: boolean;
 
     start() {
+        this.node.on("INIT", this.init, this);
+    }
+
+    init() {
         this.node.on(Node.EventType.MOUSE_DOWN, this.onMouseDown, this);
     }
 
@@ -24,6 +28,10 @@ export class CardManager extends Component {
         }
 
         this.node.setPosition(pos);
+    }
+
+    protected onDestroy(): void {
+        this.node.off(Node.EventType.MOUSE_DOWN, this.onMouseDown, this);
     }
 
 }
