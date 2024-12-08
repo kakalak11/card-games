@@ -66,7 +66,7 @@ export class BlackJackDealerManager extends Component {
         this.loadHand(this.dealerHand)
             .then(() => {
                 if (this.dealerHand.length == 2) {
-                    this.dealerHand[1]!
+                    this.dealerHand[1]
                         .cardNode
                         .getComponent(CardManager).showBackCard();
                 }
@@ -82,7 +82,7 @@ export class BlackJackDealerManager extends Component {
                 this.dealOneCardDealer();
 
             } else {
-                this.dealerHand[1]!
+                this.dealerHand[1]
                     .cardNode
                     .getComponent(CardManager).showFaceCard();
 
@@ -90,7 +90,7 @@ export class BlackJackDealerManager extends Component {
                 if (this.dealerHandValue < 17) {
                     this.dealerHit();
                 } else {
-                    this.dealerInfo.string += `\nDealer End Turn !`;
+                    this.dealerInfo.string += `\nDealer end turn`;
                     BlackJackGameManager.instance.endDealerTurn(true);
                 }
             }

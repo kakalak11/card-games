@@ -8,6 +8,7 @@ import { ToastManager } from './ToastManager';
 import { resources } from 'cc';
 import { SpriteFrame, error, instantiate, Sprite } from 'cc';
 const { ccclass, property } = _decorator;
+const debugCards = [{ value: "A", suit: "heart", numberValue: 10 }, { value: "K", suit: "heart", numberValue: 10 }];
 
 @ccclass('BlackJackPlayerManager')
 export class BlackJackPlayerManager extends Component {
@@ -36,7 +37,7 @@ export class BlackJackPlayerManager extends Component {
 
     dealOneCardPlayer() {
         this.playerHand.push(BlackJackGameManager.instance.dealOneCard());
-        // this.playerHand.push({ value: "A", suit: "heart", numberValue: 10, }); this.playerHand.push({ value: "K", suit: "heart", numberValue: 10, });
+        // this.playerHand.push(debugCards.pop());
 
         this.loadHand(this.playerHand)
             .then(() => {
@@ -64,11 +65,9 @@ export class BlackJackPlayerManager extends Component {
             this.disableButtons();
             this.handInfo.string += `\nWow! Black Jack !!!`;
             this.toast.showToast("You have hit a black jack !!!", "blackJack");
-            BlackJackGameManager.instance.endPlayerTurn();
         } else if (this.playerHandValue > 21) {
-            this.disableButtons();
             this.handInfo.string += `\nYou are busted !`;
-            BlackJackGameManager.instance.endPlayerTurn();
+            this.onEndTurn();
         }
     }
 
