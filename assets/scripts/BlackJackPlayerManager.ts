@@ -15,18 +15,21 @@ export class BlackJackPlayerManager extends Component {
 
     @property(Node) playerTable: Node;
 
-    @property(Button) hitButton: Button;
-    @property(Button) endButton: Button;
+    @property(Node) buttonLayout: Node;
     @property(Label) handInfo: Label;
+    @property(Label) handShoutOut: Label;
 
     @property(ToastManager) toast: ToastManager;
 
     hasBlackJack: boolean;
     playerHand: any[] = [];
     playerHandValue: number = 0;
+    isDoubleDown: boolean;
 
     startTurn() {
-        if (this.playerHand.length <= 1) {
+        if (this.hasBlackJack) {
+            this.onEndTurn();
+        } else if (this.playerHand.length <= 1) {
             this.dealOneCardPlayer();
             this.disableButtons();
         } else {
@@ -47,13 +50,15 @@ export class BlackJackPlayerManager extends Component {
     }
 
     disableButtons() {
-        this.hitButton.interactable = false;
-        this.endButton.interactable = false;
+        this.buttonLayout.getComponentsInChildren(Button).forEach(button => {
+            button.interactable = false;
+        });
     }
 
     enableButtons() {
-        this.hitButton.interactable = true;
-        this.endButton.interactable = true;
+        this.buttonLayout.getComponentsInChildren(Button).forEach(button => {
+            button.interactable = true;
+        });
     }
 
     updateHand(playerHand) {
@@ -64,6 +69,7 @@ export class BlackJackPlayerManager extends Component {
         if (this.hasBlackJack) {
             this.disableButtons();
             this.handInfo.string += `\nWow! Black Jack !!!`;
+            this.handShoutOut.string = "BLACK JACK !!!";
             this.toast.showToast("You have hit a black jack !!!", "blackJack");
         } else if (this.playerHandValue > 21) {
             this.handInfo.string += `\nYou are busted !`;
@@ -102,7 +108,7 @@ export class BlackJackPlayerManager extends Component {
     onHit() {
         this.playerHand.push(BlackJackGameManager.instance.dealOneCard());
 
-        
+
         this.loadHand(this.playerHand)
             .then(() => {
                 this.updateHand(this.playerHand);
@@ -114,6 +120,12 @@ export class BlackJackPlayerManager extends Component {
         BlackJackGameManager.instance.endPlayerTurn();
     }
 
+    onDoubleDown() {
+        this.isDoubleDown = true;
+        this.handShoutOut.string = "DOUBLE DOWN !!!";
+        this.dealOneCardPlayer();
+    }
+
     endGame() {
         this.disableButtons();
     }
@@ -121,7 +133,9 @@ export class BlackJackPlayerManager extends Component {
     reset() {
         this.playerTable.removeAllChildren();
         this.hasBlackJack = false;
+        this.isDoubleDown = false;
         this.playerHand = [];
+        this.handShoutOut.string = "";
         this.enableButtons();
     }
 
