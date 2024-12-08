@@ -1,5 +1,6 @@
 import { _decorator, Component, Label, Node, resources, SpriteFrame, error, instantiate, Sprite } from 'cc';
-import { BlackJackGameManager, checkBlackJack, getTotalHandValue } from './BlackJackGameManager';
+import { BlackJackGameManager } from './BlackJackGameManager';
+import { checkBlackJack, getTotalHandValue } from "./utils";
 const { ccclass, property } = _decorator;
 
 @ccclass('BlackJackDealerManager')
@@ -14,7 +15,7 @@ export class BlackJackDealerManager extends Component {
 
     startTurn() {
         this._dealerTurn = true;
-        this.scheduleOnce(this.nextMove, BlackJackGameManager.instance.turnDuration);
+        this.nextMove();
     }
 
     loadHand(hand) {
@@ -63,7 +64,7 @@ export class BlackJackDealerManager extends Component {
         this.loadHand(this._dealerHand)
             .then(() => {
                 this._dealerTurn = false;
-                this.scheduleOnce(this.nextMove, BlackJackGameManager.instance.turnDuration);
+                this.nextMove();
             });
     }
 
@@ -76,7 +77,7 @@ export class BlackJackDealerManager extends Component {
                     this.dealerHit();
                 } else {
                     this.dealerInfo.string += `\nDealer End Turn !`;
-                    BlackJackGameManager.instance.endDealerTurn(true)
+                    BlackJackGameManager.instance.endDealerTurn(this._dealerValue)
                 }
             }
         } else {
@@ -90,8 +91,16 @@ export class BlackJackDealerManager extends Component {
         this.updateHand(this._dealerHand);
         this.loadHand(this._dealerHand)
             .then(() => {
-                this.scheduleOnce(this.nextMove, BlackJackGameManager.instance.turnDuration);
+                this.nextMove();
             });
+    }
+
+    reset() {
+        this.dealerTable.removeAllChildren();
+        this._dealerHand = [];
+        this._dealerValue = 0;
+        this._dealerTurn = false;
+        this.dealerInfo.string = "Dealer value: 0";
     }
 
 }
