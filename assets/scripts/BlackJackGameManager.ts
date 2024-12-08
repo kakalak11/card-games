@@ -3,6 +3,7 @@ import { Label } from 'cc';
 import { Button } from 'cc';
 import { instantiate } from 'cc';
 import { _decorator, Component, error, Node, resources, Sprite, SpriteFrame, UITransform, v3 } from 'cc';
+import { BlackJackDealerManager } from './BlackJackDealerManager';
 const { ccclass, property } = _decorator;
 
 const MAX_CARDS = 52;
@@ -11,27 +12,37 @@ const VALUES = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"
 
 function getDeck() {
     let deckOfCards = [];
-
     for (let suitIndex = 0; suitIndex < SUITS.length; suitIndex++) {
         for (let valueIndex = 0; valueIndex < VALUES.length; valueIndex++) {
-            let cardPower = valueIndex * SUITS.length + suitIndex;
             let card = {
                 value: VALUES[valueIndex],
                 suit: SUITS[suitIndex],
                 numberValue: Number(VALUES[valueIndex]) || 10,
-                cardPower
             };
             deckOfCards.push(card);
         }
     }
-    // console.log(deckOfCards.slice().sort((a,b) => a.cardPower - b.cardPower));
     return deckOfCards
 }
 
-function getTotalHandValue(playerHand) {
+export function getTotalHandValue(playerHand) {
     return playerHand.reduce((acc, curr) => {
         return acc + curr.numberValue;
     }, 0)
+}
+
+export function checkBlackJack(playerHand) {
+    if (playerHand.length > 2) return;
+    let hasRoyalOr10;
+    let hasAce;
+    playerHand.forEach(card => {
+        if (card.value == "A") {
+            hasAce = true;
+        } else if (!Number(card.value) || card.value == 10) {
+            hasRoyalOr10 = true;
+        }
+    });
+    return hasRoyalOr10 && hasAce;
 }
 
 function shuffle(deck) {
@@ -47,61 +58,62 @@ function shuffle(deck) {
     }
 }
 
-@ccclass('GameManager')
-export class GameManager extends Component {
+@ccclass('BlackJackGameManager')
+export class BlackJackGameManager extends Component {
 
     @property(Node) cardTable: Node;
-    @property(Node) playerDeck: Node;
+    @property(Node) playerTable: Node;
     @property(Prefab) cardPrefab: Prefab;
     @property(Button) hitButton: Button;
     @property(Button) endButton: Button;
     @property(Label) handInfo: Label;
 
-    static instance: GameManager;
+    @property(BlackJackDealerManager) dealer: BlackJackDealerManager;
+
+    static instance: BlackJackGameManager;
 
     playerHand: any[] = [];
     selectedHand: any[] = [];
     cardDeck: any[] = [];
     totalValue: number = 0;
     isBust: boolean;
+    playerTurn: boolean;
+
+    turnDuration: number = 0.5;
 
     protected start(): void {
-        GameManager.instance = this;
+        BlackJackGameManager.instance = this;
         this.gameStart();
     }
 
     gameStart() {
-        this.hitButton.interactable = true;
-        this.endButton.interactable = true;
+        this.disableButtons();
+        const deck = getDeck().concat(getDeck()).concat(getDeck());
+        shuffle(deck);
+        this.cardDeck = deck;
+        this.playerTurn = true;
 
-        const deck = getDeck();
-        shuffle(deck)
-
-        return this.loadDeck(deck)
-            .then((resultDeck) => {
-                let playerHand = [];
-                this.cardDeck = resultDeck;
-
-                for (let i = 0; i < MAX_CARDS; i++) {
-                    if (playerHand.length < 2) {
-                        playerHand.push(this.cardDeck.pop());
-                    } else {
-                        break;
-                    }
-                }
-
-                playerHand.forEach(card => {
-                    card.cardNode.setParent(this.playerDeck);
-                });
-                this.playerHand = playerHand;
-            });
+        this.scheduleOnce(this.nextMove, this.turnDuration);
     }
 
-    loadDeck(deck) {
+    nextMove() {
+        if (this.playerTurn) {
+            if (this.playerHand.length < 2) {
+                this.dealOneCardPlayer();
+            } else {
+                this.enableButtons();
+            }
+        } else {
+            this.dealer.startTurn();
+        }
+    }
+
+    loadHand(hand) {
         let allPromises = [];
 
-        deck.forEach(card => {
-            const { value, suit } = card;
+        hand.forEach(card => {
+            const { value, suit, cardNode } = card;
+            if (cardNode) return;
             let assetName = value + "_" + suit;
             allPromises.push(
                 new Promise((resolve, reject) => {
@@ -111,6 +123,7 @@ export class GameManager extends Component {
                         const node = instantiate(this.cardPrefab);
                         node.getComponent(Sprite).spriteFrame = asset;
                         card.cardNode = node;
+                        card.cardNode.setParent(this.playerTable);
                         resolve(card);
                     });
                 })
@@ -119,31 +132,73 @@ export class GameManager extends Component {
 
         return Promise.all(allPromises)
             .then(() => {
-                return deck;
+                return hand;
             })
+    }
+
+    dealOneCardPlayer() {
+        this.playerHand.push(this.dealOneCard());
+
+        this.loadHand(this.playerHand)
+            .then(() => {
+                this.enableButtons();
+                this.updateHand(this.playerHand);
+                this.playerTurn = false;
+                this.scheduleOnce(this.nextMove, this.turnDuration);
+            });
+    }
+
+    dealOneCard() {
+        if (this.cardDeck.length == 0) return;
+        return this.cardDeck.pop();
     }
 
     onHit() {
         const card = this.cardDeck.pop();
 
-        card.cardNode.setParent(this.playerDeck);
         this.playerHand.push(card);
         this.updateHand(this.playerHand);
+        this.loadHand(this.playerHand);
     }
 
     onEndTurn() {
-        this.hitButton.interactable = false;
-
+        this.disableButtons();
+        this.handInfo.string += `\nPlayer end turn !`;
+        this.dealer.startTurn();
     }
 
     updateHand(playerHand) {
         this.totalValue = getTotalHandValue(playerHand);
         this.handInfo.string = `Total value: ${this.totalValue}`;
-        if (this.totalValue > 21) {
+        const isBlackJack = checkBlackJack(playerHand);
+
+        if (isBlackJack) {
+            this.disableButtons();
+            this.handInfo.string += `\nWow! Black Jack !!!`;
+        } else if (this.totalValue > 21) {
+            this.disableButtons();
             this.isBust = true;
-            this.hitButton.interactable = false;
-            this.endButton.interactable = false;
             this.handInfo.string += `\nYou are busted !`;
+            this.onEndTurn();
+        }
+    }
+
+    disableButtons() {
+        this.hitButton.interactable = false;
+        this.endButton.interactable = false;
+    }
+
+    enableButtons() {
+        this.hitButton.interactable = true;
+        this.endButton.interactable = true;
+    }
+
+    endDealerTurn(isFinish = false) {
+        this.playerTurn = true;
+        if (isFinish) {
+            this.enableButtons();
+        } else {
+            this.scheduleOnce(this.nextMove, this.turnDuration);
         }
     }
 
