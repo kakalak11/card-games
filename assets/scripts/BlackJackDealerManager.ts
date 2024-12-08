@@ -72,7 +72,7 @@ export class BlackJackDealerManager extends Component {
             if (this._dealerHand.length < 2) {
                 this.dealOneCardDealer();
             } else {
-                if (this._dealerValue < 15) {
+                if (this._dealerValue < 17) {
                     this.dealerHit();
                 } else {
                     this.dealerInfo.string += `\nDealer End Turn !`;
