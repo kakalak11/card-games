@@ -3,10 +3,12 @@ import { _decorator, Component, Node } from 'cc';
 import { TimerManager } from './TimerManager';
 import { BlackJackGameManager, TURN_DURATION } from './BlackJackGameManager';
 import { Label } from 'cc';
-import { checkBlackJack, getTotalHandValue } from './utils';
+import { calculateWinnings, checkBlackJack, getTotalHandValue } from './utils';
 import { ToastManager } from './ToastManager';
 import { resources } from 'cc';
 import { SpriteFrame, error, instantiate, Sprite } from 'cc';
+import { BetManager } from './BetManager';
+import { WalletManager } from './WalletManager';
 const { ccclass, property } = _decorator;
 const debugCards = [{ value: "A", suit: "heart", numberValue: 10 }, { value: "K", suit: "heart", numberValue: 10 }];
 
@@ -14,17 +16,29 @@ const debugCards = [{ value: "A", suit: "heart", numberValue: 10 }, { value: "K"
 export class BlackJackPlayerManager extends Component {
 
     @property(Node) playerTable: Node;
+    @property(Button) hitButton: Button;
+    @property(Button) endButton: Button;
+    @property(Button) doubleDownButton: Button;
 
-    @property(Node) buttonLayout: Node;
     @property(Label) handInfo: Label;
     @property(Label) handShoutOut: Label;
 
     @property(ToastManager) toast: ToastManager;
+    @property(BetManager) playerBet: BetManager;
+    @property(WalletManager) playerWallet: WalletManager;
 
     hasBlackJack: boolean;
     playerHand: any[] = [];
     playerHandValue: number = 0;
     isDoubleDown: boolean;
+
+    protected start(): void {
+        this.disableButtons();
+    }
+
+    onGameStart() {
+        this.updateWalletOnStart();
+    }
 
     startTurn() {
         if (this.hasBlackJack) {
@@ -50,15 +64,15 @@ export class BlackJackPlayerManager extends Component {
     }
 
     disableButtons() {
-        this.buttonLayout.getComponentsInChildren(Button).forEach(button => {
-            button.interactable = false;
-        });
+        this.hitButton.interactable = false;
+        this.endButton.interactable = false;
+        this.doubleDownButton.interactable = false;
     }
 
     enableButtons() {
-        this.buttonLayout.getComponentsInChildren(Button).forEach(button => {
-            button.interactable = true;
-        });
+        this.hitButton.interactable = true;
+        this.endButton.interactable = true;
+        this.doubleDownButton.interactable = true;
     }
 
     updateHand(playerHand) {
@@ -107,7 +121,9 @@ export class BlackJackPlayerManager extends Component {
 
     onHit() {
         this.playerHand.push(BlackJackGameManager.instance.dealOneCard());
-
+        if (this.playerHand.length > 2) {
+            this.doubleDownButton.interactable = false;
+        }
 
         this.loadHand(this.playerHand)
             .then(() => {
@@ -123,11 +139,31 @@ export class BlackJackPlayerManager extends Component {
     onDoubleDown() {
         this.isDoubleDown = true;
         this.handShoutOut.string = "DOUBLE DOWN !!!";
+        this.playerWallet.subMoney(this.playerBet.playerBetAmount);
+        this.playerBet.onDoubleDown();
         this.dealOneCardPlayer();
     }
 
-    endGame() {
+    endGame(result) {
         this.disableButtons();
+
+        switch (result) {
+            case "win":
+                const winAmount = this.playerBet.playerBetAmount + calculateWinnings(this.playerBet.playerBetAmount, this.hasBlackJack);
+                this.playerWallet.addMoney(winAmount);
+                break;
+            case "draw":
+                this.playerWallet.addMoney(this.playerBet.playerBetAmount);
+                break;
+            case "lose":
+            default:
+                break;
+        }
+    }
+
+    updateWalletOnStart() {
+        this.playerBet.resetBet();
+        this.playerWallet.subMoney(this.playerBet.playerBetAmount);
     }
 
     reset() {

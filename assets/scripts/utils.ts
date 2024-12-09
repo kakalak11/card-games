@@ -22,6 +22,10 @@ export function getDeck() {
 
 export function getTotalHandValue(playerHand) {
     return playerHand.reduce((acc, curr) => {
+        if (!curr.cardNode) {
+            debugger;
+            return;
+        }
         if (curr.cardNode.getComponent(CardManager).isShowingBackCard()) return acc;
         return acc + curr.numberValue;
     }, 0)
@@ -64,4 +68,12 @@ export function getCanvasNode(node: Node) {
     }
     canvasNode = _node;
     return _node;
+}
+
+export function calculateWinnings(betAmount, isBlackjack) {
+    if (isBlackjack) {
+        return betAmount * 1.5; // 3:2 payout for blackjack
+    } else {
+        return betAmount; // 1:1 payout for regular win
+    }
 }

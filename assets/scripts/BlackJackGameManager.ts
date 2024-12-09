@@ -17,7 +17,7 @@ export class BlackJackGameManager extends Component {
     @property(Node) cardTable: Node;
     @property(Prefab) cardPrefab: Prefab;
 
-    @property(Button) gameRestartButton: Button;
+    @property(Button) gameStartButton: Button;
 
     @property(Node) dealer: BlackJackDealerManager;
     @property(Node) player: BlackJackPlayerManager;
@@ -35,16 +35,16 @@ export class BlackJackGameManager extends Component {
     }
 
     protected start(): void {
-        this.gameStart();
+        // this.gameStart();
     }
 
     gameStart() {
         const deck = getDeck().concat(getDeck()).concat(getDeck());
         shuffle(deck);
         this.cardDeck = deck;
-        this.gameRestartButton.interactable = false;
+        this.gameStartButton.interactable = false;
         this.playerTurn = true;
-
+        this.player.onGameStart();
         this.nextMove();
     }
 
@@ -82,33 +82,42 @@ export class BlackJackGameManager extends Component {
         const dealerHasBlackJack = this.dealer.hasBlackJack;
         const isPlayerBust = playerHandValue > 21;
         const isDealerBust = dealerHandValue > 21;
+        let result;
 
         if (isPlayerBust) {
             if (isDealerBust) {
                 this.toast.showToast("Draw !!", "draw");
+                result = "draw";
             } else {
                 this.toast.showToast("You have lost", "lose");
+                result = "lose";
             }
         } else if (isDealerBust) {
             this.toast.showToast("You have won", "win");
+            result = "win";
         } else {
             if (playerHasBlackJack) {
                 if (dealerHasBlackJack) {
                     this.toast.showToast("Draw !!", "draw");
+                    result = "draw";
                 } else {
                     this.toast.showToast("You have won", "win");
+                    result = "win";
                 }
             } else if (playerHandValue > dealerHandValue) {
                 this.toast.showToast("You have won", "win");
+                result = "win";
             } else if (playerHandValue === dealerHandValue) {
                 this.toast.showToast("Draw !!", "draw");
+                result = "draw";
             } else {
                 this.toast.showToast("You have lost", "lose");
+                result = "lose";
             }
         }
 
-        this.player.endGame();
-        this.gameRestartButton.interactable = true;
+        this.player.endGame(result);
+        this.gameStartButton.interactable = true;
     }
 
     onGameRestart() {
