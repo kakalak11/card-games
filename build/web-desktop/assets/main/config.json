@@ -7,8 +7,6 @@
     ],
     "uuids": [
         "018b31a0-c370-4d16-87f3-66ef1f528c2d",
-        "0481da808",
-        "06e1beaf1",
         "103e6379-8d71-43ab-a8cb-a174c5e32df8@f9941",
         "20835ba4-6145-4fbc-a58a-051ce700aa3e",
         "20835ba4-6145-4fbc-a58a-051ce700aa3e@6c48a",
@@ -52,23 +50,7 @@
         "db://assets/scenes/black-jack.scene": "018b31a0-c370-4d16-87f3-66ef1f528c2d",
         "db://assets/scenes/menu-game.scene": "a0577330-a6fe-49b1-be64-8460f1585d9e"
     },
-    "packs": {
-        "06e1beaf1": [
-            "7d8f9b89-4fd1-4c9f-a3ab-38ec7cded7ca@6c48a",
-            "544e49d6-3f05-4fa8-9a9e-091f98fc2ce8@6c48a",
-            "20835ba4-6145-4fbc-a58a-051ce700aa3e@6c48a",
-            "951249e0-9f16-456d-8b85-a6ca954da16b@6c48a"
-        ],
-        "0481da808": [
-            "018b31a0-c370-4d16-87f3-66ef1f528c2d",
-            "20835ba4-6145-4fbc-a58a-051ce700aa3e@f9941",
-            "31e1ff9f-ae23-4b51-a07b-62285c59600b",
-            "544e49d6-3f05-4fa8-9a9e-091f98fc2ce8@f9941",
-            "7d8f9b89-4fd1-4c9f-a3ab-38ec7cded7ca@f9941",
-            "951249e0-9f16-456d-8b85-a6ca954da16b@f9941",
-            "9892773d-68c5-4d52-bf77-fc69b4fdd6ee"
-        ]
-    },
+    "packs": {},
     "versions": {
         "import": [],
         "native": []
