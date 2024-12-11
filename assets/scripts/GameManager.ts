@@ -1,4 +1,5 @@
 import { Prefab } from 'cc';
+import { Size } from 'cc';
 import { Button } from 'cc';
 import { instantiate } from 'cc';
 import { _decorator, Component, error, Node, resources, Sprite, SpriteFrame, UITransform, v3 } from 'cc';
@@ -38,7 +39,6 @@ function shuffle(deck) {
         deck[location2] = tmp;
     }
 }
-
 @ccclass('GameManager')
 export class GameManager extends Component {
 
@@ -52,6 +52,7 @@ export class GameManager extends Component {
     playerHand: any[] = [];
     selectedHand: any[] = [];
     cardDeck: any[] = [];
+
 
     protected start(): void {
         GameManager.instance = this;

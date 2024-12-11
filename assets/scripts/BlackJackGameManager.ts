@@ -7,6 +7,7 @@ import { ToastManager } from './ToastManager';
 import { checkBlackJack, getDeck, getTotalHandValue, shuffle } from './utils';
 import { TimerManager } from './TimerManager';
 import { BlackJackPlayerManager } from './BlackJackPlayerManager';
+import { Size } from 'cc';
 const { ccclass, property } = _decorator;
 
 export const TURN_DURATION = 0.5;
@@ -27,6 +28,7 @@ export class BlackJackGameManager extends Component {
 
     cardDeck: any[] = [];
     playerTurn: boolean;
+    cardSize: Size = new Size(68, 100);
 
     protected onLoad(): void {
         BlackJackGameManager.instance = this;
@@ -125,6 +127,38 @@ export class BlackJackGameManager extends Component {
         this.player.reset();
 
         this.gameStart();
+    }
+
+
+
+    loadHand(hand, table) {
+        let allPromises = [];
+
+        hand.forEach(card => {
+            const { value, suit, cardNode } = card;
+            if (cardNode) return;
+            let suitName = suit[0].toUpperCase() + suit.substring(1);
+            let assetName = `card${suitName}s_${value}`;
+            allPromises.push(
+                new Promise((resolve, reject) => {
+                    resources.load(`cards/${suit}/${assetName}/spriteFrame`, SpriteFrame, (err, asset) => {
+                        if (err) return reject(error(err.message));
+
+                        const node = instantiate(this.cardPrefab);
+                        node.getComponent(Sprite).spriteFrame = asset;
+                        node.getComponent(UITransform).setContentSize(this.cardSize);
+                        card.cardNode = node;
+                        card.cardNode.setParent(table);
+                        resolve(card);
+                    });
+                })
+            )
+        })
+
+        return Promise.all(allPromises)
+            .then(() => {
+                return hand;
+            })
     }
 
 }

@@ -3,6 +3,8 @@ import { BlackJackGameManager, TURN_DURATION } from './BlackJackGameManager';
 import { checkBlackJack, getTotalHandValue } from "./utils";
 import { TimerManager } from './TimerManager';
 import { CardManager } from './CardManager';
+import { UITransform } from 'cc';
+import { Size } from 'cc';
 const { ccclass, property } = _decorator;
 
 @ccclass('BlackJackDealerManager')
@@ -21,34 +23,6 @@ export class BlackJackDealerManager extends Component {
         this.nextMove();
     }
 
-    loadHand(hand) {
-        let allPromises = [];
-
-        hand.forEach(card => {
-            const { value, suit, cardNode } = card;
-            if (cardNode) return;
-            let assetName = value + "_" + suit;
-            allPromises.push(
-                new Promise((resolve, reject) => {
-                    resources.load(`face-cards/${assetName}/spriteFrame`, SpriteFrame, (err, asset) => {
-                        if (err) return reject(error(err.message));
-
-                        const node = instantiate(BlackJackGameManager.instance.cardPrefab);
-                        node.getComponent(Sprite).spriteFrame = asset;
-                        card.cardNode = node;
-                        card.cardNode.setParent(this.dealerTable);
-                        resolve(card);
-                    });
-                })
-            )
-        })
-
-        return Promise.all(allPromises)
-            .then(() => {
-                return hand;
-            })
-    }
-
     updateHand(playerHand) {
         this.dealerHandValue = getTotalHandValue(playerHand);
         this.dealerInfo.string = `Dealer value: ${this.dealerHandValue}`;
@@ -63,7 +37,8 @@ export class BlackJackDealerManager extends Component {
 
     dealOneCardDealer() {
         this.dealerHand.push(BlackJackGameManager.instance.dealOneCard());
-        this.loadHand(this.dealerHand)
+
+        BlackJackGameManager.instance.loadHand(this.dealerHand, this.dealerTable)
             .then(() => {
                 if (this.dealerHand.length == 2) {
                     this.dealerHand[1]
@@ -102,7 +77,7 @@ export class BlackJackDealerManager extends Component {
     dealerHit() {
         this.dealerHand.push(BlackJackGameManager.instance.dealOneCard());
 
-        this.loadHand(this.dealerHand)
+        BlackJackGameManager.instance.loadHand(this.dealerHand, this.dealerTable)
             .then(() => {
                 this.updateHand(this.dealerHand);
                 TimerManager.instance._scheduleOnce(this.nextMove.bind(this), TURN_DURATION);

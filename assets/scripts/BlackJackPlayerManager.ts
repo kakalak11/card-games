@@ -1,14 +1,12 @@
-import { Button } from 'cc';
-import { _decorator, Component, Node } from 'cc';
-import { TimerManager } from './TimerManager';
-import { BlackJackGameManager, TURN_DURATION } from './BlackJackGameManager';
-import { Label } from 'cc';
+import { BlackJackGameManager } from './BlackJackGameManager';
 import { calculateWinnings, checkBlackJack, getTotalHandValue } from './utils';
 import { ToastManager } from './ToastManager';
-import { resources } from 'cc';
-import { SpriteFrame, error, instantiate, Sprite } from 'cc';
 import { BetManager } from './BetManager';
 import { WalletManager } from './WalletManager';
+import {
+    _decorator, Component, Node, SpriteFrame, error, instantiate, Sprite, resources, Button,
+    Label
+} from 'cc';
 const { ccclass, property } = _decorator;
 const debugCards = [{ value: "A", suit: "heart", numberValue: 10 }, { value: "K", suit: "heart", numberValue: 10 }];
 
@@ -56,7 +54,7 @@ export class BlackJackPlayerManager extends Component {
         this.playerHand.push(BlackJackGameManager.instance.dealOneCard());
         // this.playerHand.push(debugCards.pop());
 
-        this.loadHand(this.playerHand)
+        BlackJackGameManager.instance.loadHand(this.playerHand, this.playerTable)
             .then(() => {
                 this.updateHand(this.playerHand);
                 BlackJackGameManager.instance.endPlayerTurn();
@@ -91,41 +89,13 @@ export class BlackJackPlayerManager extends Component {
         }
     }
 
-    loadHand(hand) {
-        let allPromises = [];
-
-        hand.forEach(card => {
-            const { value, suit, cardNode } = card;
-            if (cardNode) return;
-            let assetName = value + "_" + suit;
-            allPromises.push(
-                new Promise((resolve, reject) => {
-                    resources.load(`face-cards/${assetName}/spriteFrame`, SpriteFrame, (err, asset) => {
-                        if (err) return reject(error(err.message));
-
-                        const node = instantiate(BlackJackGameManager.instance.cardPrefab);
-                        node.getComponent(Sprite).spriteFrame = asset;
-                        card.cardNode = node;
-                        card.cardNode.setParent(this.playerTable);
-                        resolve(card);
-                    });
-                })
-            )
-        })
-
-        return Promise.all(allPromises)
-            .then(() => {
-                return hand;
-            })
-    }
-
     onHit() {
         this.playerHand.push(BlackJackGameManager.instance.dealOneCard());
         if (this.playerHand.length > 2) {
             this.doubleDownButton.interactable = false;
         }
 
-        this.loadHand(this.playerHand)
+        BlackJackGameManager.instance.loadHand(this.playerHand, this.playerTable)
             .then(() => {
                 this.updateHand(this.playerHand);
             });
