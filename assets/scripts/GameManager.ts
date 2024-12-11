@@ -92,10 +92,10 @@ export class GameManager extends Component {
 
         deck.forEach(card => {
             const { value, suit } = card;
-            let assetName = value + "_" + suit;
+            let assetName = suit + "_" + value;
             allPromises.push(
                 new Promise((resolve, reject) => {
-                    resources.load(`face-cards/${assetName}/spriteFrame`, SpriteFrame, (err, asset) => {
+                    resources.load(`cards/${suit}/${assetName}/spriteFrame`, SpriteFrame, (err, asset) => {
                         if (err) return reject(error(err.message));
 
                         const node = instantiate(this.cardPrefab);

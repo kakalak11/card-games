@@ -137,8 +137,7 @@ export class BlackJackGameManager extends Component {
         hand.forEach(card => {
             const { value, suit, cardNode } = card;
             if (cardNode) return;
-            let suitName = suit[0].toUpperCase() + suit.substring(1);
-            let assetName = `card${suitName}s_${value}`;
+            let assetName = `${suit}_${value}`;
             allPromises.push(
                 new Promise((resolve, reject) => {
                     resources.load(`cards/${suit}/${assetName}/spriteFrame`, SpriteFrame, (err, asset) => {

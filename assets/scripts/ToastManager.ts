@@ -13,12 +13,12 @@ export class ToastManager extends Component {
     @property(Color) drawColor: Color = new Color("#00A6CF");
     @property(Color) blackJackColor: Color = new Color("#00A6CF");
 
-    _originalBottom: number = 0;
+    _originalTop: number = 0;
 
     protected onLoad(): void {
         const canvasNode = find("Canvas");
         this.getComponent(Widget).target = canvasNode;
-        this._originalBottom = this.getComponent(Widget).bottom;
+        this._originalTop = this.getComponent(Widget).top;
     }
 
     showToast(msg = "Your message", type = "win") {
@@ -30,12 +30,12 @@ export class ToastManager extends Component {
 
         if (this[type + "Color"]) this.getComponent(Sprite).color = this[type + "Color"];
         if (widgetComponent) {
-            widgetComponent.bottom = -height;
+            widgetComponent.top = -height;
 
             tween(widgetComponent)
-                .to(0.5, { bottom: this._originalBottom }, { easing: "backOut" })
+                .to(0.5, { top: this._originalTop }, { easing: "backOut" })
                 .delay(2)
-                .to(0.5, { bottom: -height }, { easing: "backIn" })
+                .to(0.5, { top: -height }, { easing: "backIn" })
                 .call(() => {
                     this.getComponent(UIOpacity).opacity = 0;
                 })
