@@ -62,7 +62,7 @@
         "_value": false
       },
       "intersection-2d": {
-        "_value": false
+        "_value": true
       },
       "primitive": {
         "_value": false
@@ -132,6 +132,7 @@
       "base",
       "gfx-webgl",
       "gfx-webgl2",
+      "intersection-2d",
       "profiler",
       "tween",
       "ui"

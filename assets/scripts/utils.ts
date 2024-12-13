@@ -1,23 +1,27 @@
 import { Canvas, Node } from "cc";
 import { CardManager } from "./CardManager";
+import { EventMouse } from "cc";
+import { UITransform } from "cc";
+import { Vec3 } from "cc";
 
 export const MAX_CARDS = 52;
 export const SUITS = ["spade", "diamond", "club", "heart"];
 export const VALUES = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"];
+export const ROYAL_VALUES = { "J": 11, "Q": 12, "K": 13, "A": 14 };
 
-export function getDeck() {
+export function getDeck(isMauBinh = false) {
     let deckOfCards = [];
     for (let suitIndex = 0; suitIndex < SUITS.length; suitIndex++) {
         for (let valueIndex = 0; valueIndex < VALUES.length; valueIndex++) {
             let card = {
                 value: VALUES[valueIndex],
                 suit: SUITS[suitIndex],
-                numberValue: Number(VALUES[valueIndex]) || 10,
+                numberValue: Number(VALUES[valueIndex]) || (isMauBinh ? ROYAL_VALUES[VALUES[valueIndex]] : 10),
             };
             deckOfCards.push(card);
         }
     }
-    return deckOfCards
+    return deckOfCards;
 }
 
 export function getTotalHandValue(playerHand) {
@@ -76,4 +80,10 @@ export function calculateWinnings(betAmount, isBlackjack) {
     } else {
         return betAmount; // 1:1 payout for regular win
     }
+}
+
+export function getLocalPosFromEvent(evt: EventMouse, targetNode) {
+    const worldPos = new Vec3(evt.getUILocation().x, evt.getUILocation().y, 0);
+    const nodePos = targetNode.getComponent(UITransform).convertToNodeSpaceAR(worldPos);
+    return nodePos;
 }
