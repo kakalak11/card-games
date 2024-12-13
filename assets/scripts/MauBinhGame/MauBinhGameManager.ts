@@ -51,6 +51,7 @@ export class MauBinhGameManager extends Component {
 
                         const node = instantiate(this.cardPrefab);
                         node.getComponent(Sprite).spriteFrame = asset;
+                        node.name = assetName;
                         card.cardNode = node;
                         resolve(card);
                     });

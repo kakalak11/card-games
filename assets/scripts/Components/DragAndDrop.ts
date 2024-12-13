@@ -1,88 +1,59 @@
 import { _decorator, Component, EventMouse, Node, UITransform, v3 } from 'cc';
 import { MauBinhPlayerManager } from '../MauBinhGame/MauBinhPlayerManager';
-import { Vec3 } from 'cc';
-import { Prefab } from 'cc';
-import { getLocalPosFromEvent } from '../utils';
+import { EventTouch } from 'cc';
+import { tween } from 'cc';
+import { changeParent } from '../utils';
 const { ccclass, property } = _decorator;
 
 @ccclass('DragAndDrop')
 export class DragAndDrop extends Component {
 
-    @property(Node) target: Node;
-    @property(Prefab) dragCard: Prefab;
-
-    _isDragging: boolean;
     _playerManager: MauBinhPlayerManager;
     _parent: Node;
-    _cloneProps: any;
+    _originalPos: any;
+    _canDrag: boolean = true;
 
     protected onLoad(): void {
-        if (!this.target) {
-            this.target = this.node;
-        }
         this._parent = this.node.parent;
     }
 
     protected start(): void {
-        this.node.on(Node.EventType.MOUSE_DOWN, this.onMouseDown, this);
-        this.node.on(Node.EventType.MOUSE_UP, this.onMouseUp, this);
-        this.node.on(Node.EventType.MOUSE_MOVE, this.onMouseMove, this);
-        this.node.on(Node.EventType.MOUSE_LEAVE, this.onMouseLeave, this);
+        this.node.on(Node.EventType.TOUCH_START, this.onTouchStart, this);
+        this.node.on(Node.EventType.TOUCH_END, this.onTouchEnd, this);
+        this.node.on(Node.EventType.TOUCH_MOVE, this.onTouchMove, this);
     }
 
     init(playerManager: MauBinhPlayerManager) {
         this._playerManager = playerManager;
     }
 
-    onMouseLeave(event: EventMouse) {
-        if (this._isDragging) {
-
-            this._isDragging = false;
-            this.node.setParent(this._cloneProps.parent);
-            this.node.setSiblingIndex(this._cloneProps.siblingIndex);
-            this.node.setPosition(this._cloneProps.position);
-        }
+    onTouchStart(event: EventTouch) {
+        if (!this._canDrag) return;
+        this._canDrag = false;
+        changeParent(this.node, this._playerManager.dragHolder);
+        this._originalPos = this.node.getPosition();
     }
 
-    onMouseDown(event: EventMouse) {
-        this._isDragging = true;
-        this._cloneProps = Object.assign({}, { position: this.node.getPosition(), parent: this.node.parent, siblingIndex: this.node.getSiblingIndex() });
-
-        const worldPos = this.node.getComponent(UITransform).convertToWorldSpaceAR(v3(0, 0, 0));
-        const nodePos = this._playerManager.dragHolder.getComponent(UITransform).convertToNodeSpaceAR(worldPos);
-
-        this.target.setParent(this._playerManager.dragHolder);
-        this.target.setPosition(nodePos);
-
-        console.log(event.getLocation());
-    }
-
-    onMouseMove(event: EventMouse) {
-        if (this._isDragging) {
-            this.dragNode(event);
-        }
-    }
-
-    onMouseUp(event: EventMouse) {
-        if (this._isDragging) {
-            this._isDragging = false;
-            this.node.setParent(this._cloneProps.parent);
-            this.node.setSiblingIndex(this._cloneProps.siblingIndex);
-            this.node.setPosition(this._cloneProps.position);
-        }
-    }
-
-    setPositionTarget(worldPos) {
-        const mouseWorldPos = v3(worldPos.x, worldPos.y, 0);
-        this.target.setWorldPosition(mouseWorldPos);
-    }
-
-    dragNode(event: EventMouse) {
+    onTouchMove(event: EventTouch) {
         const delta = event.getUIDelta();
         const moveX = this.node.getPosition().x + delta.x;
         const moveY = this.node.getPosition().y + delta.y;
 
         this.node.setPosition(moveX, moveY);
+    }
+
+    onTouchEnd(event: EventTouch) {
+        if (this._originalPos) {
+            tween(this.node)
+                .to(0.3, { position: this._originalPos.clone() })
+                .call(() => {
+                    changeParent(this.node, this._parent);
+                    this._parent.children.sort((a, b) => a.getPosition().x - b.getPosition().x);
+                    this._canDrag = true;
+                })
+                .start();
+        }
+        this._originalPos = null;
     }
 
 }

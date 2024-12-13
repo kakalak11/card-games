@@ -87,3 +87,34 @@ export function getLocalPosFromEvent(evt: EventMouse, targetNode) {
     const nodePos = targetNode.getComponent(UITransform).convertToNodeSpaceAR(worldPos);
     return nodePos;
 }
+
+export function changeParent(node: any, newParent: any) {
+    if (node.parent === newParent) return;
+    const getWorldRotation = function (node: any) {
+        let currNode = node;
+        let resultRot = currNode.angle || 0;
+        do {
+            currNode = currNode.parent;
+            resultRot += currNode.angle || 0;
+        } while (currNode.parent != null);
+        resultRot = resultRot % 360;
+        return resultRot;
+    };
+
+    const oldWorRot = getWorldRotation(node);
+    const newParentWorRot = getWorldRotation(newParent);
+    const newLocRot = oldWorRot - newParentWorRot;
+
+    if (!node.getComponent(UITransform)) {
+        node.addComponent(UITransform);
+    }
+    if (!newParent.getComponent(UITransform)) {
+        newParent.addComponent(UITransform);
+    }
+    const oldWorPos = node.getComponent(UITransform).convertToWorldSpaceAR(new Vec3(0, 0, 0));
+    const newLocPos = newParent.getComponent(UITransform).convertToNodeSpaceAR(oldWorPos);
+
+    node.parent = newParent;
+    node.position = newLocPos;
+    node.angle = newLocRot;
+};

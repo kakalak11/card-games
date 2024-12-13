@@ -490,7 +490,7 @@
     "__prefab": null,
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 46.689453125,
+      "width": 46.67523734177215,
       "height": 126
     },
     "_anchorPoint": {
@@ -523,7 +523,7 @@
     "_string": "Chi 1",
     "_horizontalAlign": 1,
     "_verticalAlign": 1,
-    "_actualFontSize": 20,
+    "_actualFontSize": 24.6875,
     "_fontSize": 20,
     "_fontFamily": "Arial",
     "_lineHeight": 100,
@@ -599,7 +599,7 @@
     "__prefab": null,
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 46.689453125,
+      "width": 46.67523734177215,
       "height": 126
     },
     "_anchorPoint": {
@@ -632,7 +632,7 @@
     "_string": "Chi 2",
     "_horizontalAlign": 1,
     "_verticalAlign": 1,
-    "_actualFontSize": 20,
+    "_actualFontSize": 24.6875,
     "_fontSize": 20,
     "_fontFamily": "Arial",
     "_lineHeight": 100,
@@ -708,7 +708,7 @@
     "__prefab": null,
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 46.689453125,
+      "width": 46.67523734177215,
       "height": 126
     },
     "_anchorPoint": {
@@ -741,7 +741,7 @@
     "_string": "Chi 3",
     "_horizontalAlign": 1,
     "_verticalAlign": 1,
-    "_actualFontSize": 20,
+    "_actualFontSize": 24.6875,
     "_fontSize": 20,
     "_fontFamily": "Arial",
     "_lineHeight": 100,

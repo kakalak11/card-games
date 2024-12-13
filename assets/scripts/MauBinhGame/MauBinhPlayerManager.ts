@@ -42,22 +42,18 @@ export class MauBinhPlayerManager extends Component {
             cardNode.active = true;
         });
 
-        // this.scheduleOnce(() => {
-        //     let width1 = this.firstChi.getComponent(UITransform).width;
-        //     let width3 = this.thirdChi.getComponent(UITransform).width;
+        this.scheduleOnce(() => {
+            let width5 = this.firstChi.getComponent(UITransform).width;
+            let width3 = this.thirdChi.getComponent(UITransform).width;
 
-        //     this.firstChi.getComponent(Layout).resizeMode = Layout.ResizeMode.NONE;
-        //     this.secondChi.getComponent(Layout).resizeMode = Layout.ResizeMode.NONE;
-        //     this.thirdChi.getComponent(Layout).resizeMode = Layout.ResizeMode.NONE;
+            this.firstChi.getComponent(UITransform).width = width5;
+            this.secondChi.getComponent(UITransform).width = width5;
+            this.thirdChi.getComponent(UITransform).width = width3;
 
-        //     this.firstChi.getComponent(UITransform).width = width1;
-        //     this.secondChi.getComponent(UITransform).width = width1;
-        //     this.thirdChi.getComponent(UITransform).width = width3;
-        // });
-
-        this.firstChi.getComponent(Layout).enabled = false
-        this.secondChi.getComponent(Layout).enabled = false
-        this.thirdChi.getComponent(Layout).enabled = false
+            this.firstChi.getComponent(Layout).enabled = false;
+            this.secondChi.getComponent(Layout).enabled = false;
+            this.thirdChi.getComponent(Layout).enabled = false;
+        }, 0.5);
     }
 
     onSelectCard(card) {
