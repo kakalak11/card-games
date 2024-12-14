@@ -55,7 +55,6 @@ export class CardMauBinh extends Component {
     }
 
     onTouchEnd(event: EventTouch) {
-        console.log("end");
         this._playerManager.setDragTarget(null);
     }
 

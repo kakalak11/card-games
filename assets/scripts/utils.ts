@@ -118,3 +118,112 @@ export function changeParent(node: any, newParent: any) {
     node.position = newLocPos;
     node.angle = newLocRot;
 };
+
+export function findCardByValue(chi, numberValue, cacheCard = []) {
+    return chi.find(card => {
+        if (card.numberValue == numberValue && cacheCard.findIndex(_card => _card === card) === -1) {
+            return card;
+        }
+    });
+}
+
+export function detectSanh(chi) {
+    let foundSanh;
+    let aceHigh;
+
+    for (let i = 0; i < chi.length; i++) {
+        let currCard = chi[i];
+        let countCard = 0;
+
+        while (currCard) {
+            currCard = findCardByValue(chi, currCard.numberValue + 1);
+            countCard++;
+        }
+
+        foundSanh = countCard == 5;
+        if (foundSanh) {
+            aceHigh = chi.pop().numberValue == 13;
+            break;
+        }
+    }
+
+    return { foundSanh, aceHigh };
+}
+
+export function findCardBySuit(chi, suit, cacheCard) {
+    return chi.find(card => {
+        if (card.suit == suit && cacheCard.findIndex(_card => _card === card) === -1) {
+            return card;
+        }
+    });
+}
+
+export function detectThung(chi) {
+    let foundThung;
+
+    for (let i = 0; i < chi.length; i++) {
+        let currCard = chi[i];
+        let countCard = 0;
+        let cacheCard = [];
+
+        while (currCard) {
+            cacheCard.push(currCard);
+            currCard = findCardBySuit(chi, currCard.suit, cacheCard);
+            countCard++;
+        }
+
+        foundThung = countCard == 5;
+        if (foundThung) break;
+    }
+
+    return foundThung;
+}
+
+export function detectDoi(chi) {
+    let foundDoi;
+    let foundSam;
+    let foundThu;
+    let foundTuQuy;
+    let foundCuLu;
+    let seen = {};
+
+    for (let i = 0; i < chi.length; i++) {
+        let currCard = chi[i];
+        let countCard = 0;
+        let cacheCard = [];
+
+        if (seen[currCard.numberValue]) continue;
+        seen[currCard.numberValue] = true;
+
+        while (currCard) {
+            cacheCard.push(currCard);
+            currCard = findCardByValue(chi, currCard.numberValue, cacheCard);
+            countCard++;
+        }
+
+
+        switch (countCard) {
+            case 2:
+                if (foundDoi) {
+                    foundThu = true;
+                } else {
+                    foundDoi = true;
+                }
+                break;
+            case 3:
+                foundSam = true;
+                break;
+            case 4:
+                foundTuQuy = true;
+                break;
+        }
+    }
+
+    if (foundDoi && foundSam) {
+        foundCuLu = true;
+        foundDoi = false;
+        foundSam = false;
+    }
+
+    return { foundDoi, foundSam, foundThu, foundTuQuy, foundCuLu };
+}

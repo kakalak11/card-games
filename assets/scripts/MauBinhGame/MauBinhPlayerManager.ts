@@ -1,10 +1,6 @@
-import { _decorator, Component, Node } from 'cc';
+import { _decorator, Component, Node, Layout, UITransform } from 'cc';
 import { CardMauBinh } from './CardMauBinh';
-import { DragAndDrop } from '../Components/DragAndDrop';
-import { Layout } from 'cc';
-import { UI } from 'cc';
-import { UITransform } from 'cc';
-import { v3 } from 'cc';
+import { detectDoi, detectSanh, detectThung } from '../utils';
 const { ccclass, property } = _decorator;
 
 @ccclass('MauBinhPlayerManager')
@@ -47,6 +43,7 @@ export class MauBinhPlayerManager extends Component {
                         this.playerHand.forEach(({ cardNode }) => {
                             cardNode.getComponent(CardMauBinh).setProps();
                         });
+                        this._calculateHand();
                     });
             }
         }
@@ -84,23 +81,27 @@ export class MauBinhPlayerManager extends Component {
                 cardNode.getComponent(CardMauBinh).setProps();
             });
         });
+
+        this._calculateHand();
     }
 
-    onSelectCard(card) {
-        const cardInfo = this.playerHand.find(({ cardNode }) => cardNode === card);
-        const isSelected = this.selectedHand.find(({ cardNode }) => cardNode === card);
-        if (!cardInfo || isSelected) return;
+    _calculateHand() {
+        const chi1 = this.playerHand.filter(({ cardNode }) => cardNode.parent.name == 'Chi1').sort((a, b) => a.numberValue - b.numberValue);
+        console.log(chi1);
 
-        this.selectedHand.push(cardInfo);
-        console.log("Selected hand: ", this.selectedHand);
-    }
+        
+        const mauThau = chi1.slice().pop();
+        // detect Sảnh
+        const { foundSanh, aceHigh } = detectSanh(chi1);
+        // detect Thùng
+        const foundThung = detectThung(chi1);
+        // detect Thùng Phá Sảnh
+        const foundThungPhaSanh = foundThung && foundSanh;
+        // detect Đôi / Thú / Sám / Cù Lũ / Tứ Quý
+        const { foundDoi, foundSam, foundThu, foundTuQuy, foundCuLu } = detectDoi(chi1);
+        const foundSanhRong = foundThungPhaSanh && aceHigh;
 
-    onUnselectCard(card) {
-        const selectedIndex = this.selectedHand.findIndex(({ cardNode }) => cardNode === card);
-        if (selectedIndex == -1) return;
 
-        this.selectedHand.splice(selectedIndex, 1);
-        console.log("Selected hand: ", this.selectedHand);
     }
 
 }
