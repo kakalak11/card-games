@@ -20,9 +20,36 @@ export class MauBinhPlayerManager extends Component {
 
     playerHand: any = [];
     selectedHand: any = [];
+    dragTarget: Node;
 
-    protected onLoad(): void {
-        console.log(this.dragHolder.getComponent(UITransform).convertToNodeSpaceAR(v3(1280 / 2, 720 / 2, 0)));
+    setDragTarget(dragTarget) {
+        if (dragTarget) {
+            this.dragTarget = dragTarget;
+        } else {
+            const intersectedCard = this.getComponentsInChildren(CardMauBinh).find(card => card.isIntersected);
+            const dragCard = this.dragTarget.getComponent(CardMauBinh);
+            let allPromises = [];
+            if (intersectedCard) {
+                allPromises.push(dragCard.switchChi(intersectedCard.node));
+                allPromises.push(intersectedCard.switchChi(this.dragTarget))
+            } else {
+                dragCard.returnToOriginal();
+            }
+            if (allPromises.length > 0) {
+                Promise.all(allPromises)
+                    .then(() => {
+                        this.dragTarget = null;
+
+                        this.firstChi.children.sort((a, b) => a.getPosition().x - b.getPosition().x);
+                        this.secondChi.children.sort((a, b) => a.getPosition().x - b.getPosition().x);
+                        this.thirdChi.children.sort((a, b) => a.getPosition().x - b.getPosition().x);
+
+                        this.playerHand.forEach(({ cardNode }) => {
+                            cardNode.getComponent(CardMauBinh).setProps();
+                        });
+                    });
+            }
+        }
     }
 
     setPlayerHand(hand) {
@@ -37,8 +64,7 @@ export class MauBinhPlayerManager extends Component {
                 cardNode.setParent(this.thirdChi);
             }
 
-            // cardNode.getComponent(CardMauBinh).init(this);
-            cardNode.getComponent(DragAndDrop).init(this);
+            cardNode.getComponent(CardMauBinh).init(this);
             cardNode.active = true;
         });
 
@@ -53,7 +79,11 @@ export class MauBinhPlayerManager extends Component {
             this.firstChi.getComponent(Layout).enabled = false;
             this.secondChi.getComponent(Layout).enabled = false;
             this.thirdChi.getComponent(Layout).enabled = false;
-        }, 0.5);
+
+            this.playerHand.forEach(({ cardNode }) => {
+                cardNode.getComponent(CardMauBinh).setProps();
+            });
+        });
     }
 
     onSelectCard(card) {

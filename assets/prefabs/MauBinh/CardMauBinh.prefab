@@ -300,7 +300,7 @@
     "fileId": "d3JCqPT7JIYqDpaM8Ps+t9"
   },
   {
-    "__type__": "2b534Pn7fxNcImbb9LfLMaH",
+    "__type__": "cc.UIOpacity",
     "_name": "",
     "_objFlags": 0,
     "__editorExtras__": {},
@@ -311,11 +311,12 @@
     "__prefab": {
       "__id__": 15
     },
+    "_opacity": 255,
     "_id": ""
   },
   {
     "__type__": "cc.CompPrefabInfo",
-    "fileId": "5b7xu5fAJFHLj2b1Flx5bQ"
+    "fileId": "b9Hpmr3HdBYZEhsKzS0qfr"
   },
   {
     "__type__": "cc.PrefabInfo",
