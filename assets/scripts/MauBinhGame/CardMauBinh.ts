@@ -42,6 +42,7 @@ export class CardMauBinh extends Component {
     onTouchStart(event: EventTouch) {
         if (!this._canDrag) return;
         this._canDrag = false;
+        this._spriteComp.color = UNDIM_COLOR;
         changeParent(this.node, this._playerManager.dragHolder);
 
         this._playerManager.setDragTarget(this.node);

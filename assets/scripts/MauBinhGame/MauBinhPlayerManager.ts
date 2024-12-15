@@ -2,6 +2,11 @@ import { _decorator, Component, Node, Layout, UITransform } from 'cc';
 import { CardMauBinh } from './CardMauBinh';
 import { detectAllCombinations, detectDoi, detectSanh, detectThung } from '../utils';
 import { Label } from 'cc';
+import { tween } from 'cc';
+import { v2 } from 'cc';
+import { v3 } from 'cc';
+import { Tween } from 'cc';
+import { BlockInputEvents } from 'cc';
 const { ccclass, property } = _decorator;
 
 @ccclass('MauBinhPlayerManager')
@@ -15,11 +20,13 @@ export class MauBinhPlayerManager extends Component {
 
     @property(Node) dragHolder: Node;
     @property(Node) combinationsLabels: Label[];
+    @property(BlockInputEvents) blockInput: BlockInputEvents;
 
     playerHand: any = [];
     selectedHand: any = [];
     dragTarget: Node;
     result: any;
+    isXepBai: boolean = true;
 
     protected onLoad(): void {
         this.combinationsLabels = (this.combinationsLabels as any)?.getComponentsInChildren(Label);
@@ -36,8 +43,9 @@ export class MauBinhPlayerManager extends Component {
                 allPromises.push(dragCard.switchChi(intersectedCard.node));
                 allPromises.push(intersectedCard.switchChi(this.dragTarget))
             } else {
-                dragCard.returnToOriginal();
+                allPromises.push(dragCard.returnToOriginal());
             }
+
             if (allPromises.length > 0) {
                 Promise.all(allPromises)
                     .then(() => {
@@ -94,7 +102,6 @@ export class MauBinhPlayerManager extends Component {
 
     _calculateHand() {
         this.result = {};
-
         const chi1 = this.playerHand.filter(({ cardNode }) => cardNode.parent.name == 'Chi1').sort((a, b) => a.numberValue - b.numberValue);
         const chi2 = this.playerHand.filter(({ cardNode }) => cardNode.parent.name == 'Chi2').sort((a, b) => a.numberValue - b.numberValue);
         const chi3 = this.playerHand.filter(({ cardNode }) => cardNode.parent.name == 'Chi3').sort((a, b) => a.numberValue - b.numberValue);
@@ -104,13 +111,30 @@ export class MauBinhPlayerManager extends Component {
             console.log("chi ", index + 1, " : ", handResult);
 
             this.combinationsLabels[index].string = `Chi ${index + 1} : ${handResult.title}`;
-
-            handResult.cardList.forEach(({cardNode}) => {
+            handResult.cardList.forEach(({ cardNode }) => {
                 cardNode.getComponent(CardMauBinh).showInCombination();
-            })
+            });
 
-        })
+            this.result[`chi${index + 1}`] = handResult;
+        });
+        console.log(this.result);
+    }
 
+    clickXepBai() {
+        Tween.stopAllByTarget(this.node);
+
+        if (this.isXepBai) {
+            tween(this.node)
+                .to(0.3, { scale: v3(0.5, 0.5, 1) }, { easing: "backInOut" })
+                .start()
+        } else {
+            tween(this.node)
+                .to(0.3, { scale: v3(1, 1, 1) }, { easing: "backInOut" })
+                .start()
+        }
+
+        this.isXepBai = !this.isXepBai;
+        this.blockInput.enabled = !this.isXepBai;
     }
 
 }
