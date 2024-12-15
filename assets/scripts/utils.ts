@@ -249,7 +249,8 @@ export function detectAllCombinations(chi = []) {
             result = Object.assign(result, {
                 aceHigh: [...chi].pop().numberValue == 13,
                 foundStraight: true,
-                cardList
+                title: "Thùng",
+                cardList: cardList.slice(),
             });
 
             break;
@@ -268,13 +269,24 @@ export function detectAllCombinations(chi = []) {
         if (cardList.length == 5) {
             result = Object.assign(result, {
                 foundFlush: true,
-                cardList
+                title: "Sảnh",
+                cardList: cardList.slice(),
             });
 
             break;
         }
     }
 
+    if (result.foundFlush && result.foundStraight) {
+        result = Object.assign(result, {
+            foundStraightFlush: true,
+            title: "Thùng Phá Sảnh",
+            cardList: cardList.slice(),
+        });
+        delete result.foundFlush;
+        delete result.foundStraight;
+    }
+    cardList = [];
     for (let i = 0; i < chi.length; i++) {
         let currCard = chi[i];
         let cache = [];
@@ -287,40 +299,57 @@ export function detectAllCombinations(chi = []) {
             currCard = findCardByValue(chi, currCard.numberValue, cache);
         }
 
-
         switch (cache.length) {
             case 2:
                 if (result.foundPair) {
                     result = Object.assign(result, {
                         found2Pairs: true,
-                        cardList
+                        title: "Thú",
+                        cardList: cardList.concat(cache)
                     });
                     delete result.foundPair;
                 } else {
                     result = Object.assign(result, {
                         foundPair: true,
-                        cardList
+                        title: "Đôi",
+                        cardList: cardList.concat(cache)
                     });
                 }
+                cardList = result.cardList.slice();
                 break;
             case 3:
                 result = Object.assign(result, {
                     found3Kinds: true,
-                    cardList
+                    title: "Sám",
+                    cardList: cardList.concat(cache)
                 });
+                cardList = result.cardList.slice();
                 break;
             case 4:
                 result = Object.assign(result, {
                     found4Kinds: true,
-                    cardList
+                    title: "Tứ Quý",
+                    cardList: cardList.concat(cache)
                 });
+                cardList = result.cardList.slice();
                 break;
         }
     }
 
+    if (result.foundPair && result.found3Kinds) {
+        result = Object.assign(result, {
+            foundFullHouse: true,
+            title: "Cù Lũ",
+            cardList: cardList.slice()
+        });
+        delete result.foundPair;
+        delete result.found3Kinds;
+    }
+
     if (Object.keys(result).length == 0) {
         result = Object.assign(result, {
-            cardList: [...chi].pop(),
+            cardList: [[...chi].pop()],
+            title: "Mậu Thầu",
             isHighCard: true
         });
     }

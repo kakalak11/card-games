@@ -8,6 +8,7 @@ const { ccclass, property } = _decorator;
 
 const DIM_COLOR = new Color(200, 200, 200);
 const UNDIM_COLOR = Color.WHITE;
+const COMBO_COLOR = new Color(100, 100, 100);
 
 @ccclass('CardMauBinh')
 export class CardMauBinh extends Component {
@@ -109,7 +110,7 @@ export class CardMauBinh extends Component {
             if (this.isIntersected) {
                 this._spriteComp.color = DIM_COLOR
             } else {
-                this._spriteComp.color = UNDIM_COLOR
+                this._spriteComp.color = UNDIM_COLOR;
             }
         } else if (this.isIntersected) {
             this.isIntersected = false;
@@ -124,6 +125,10 @@ export class CardMauBinh extends Component {
         const isIntersectOverHalfY = Math.abs(dragTargetBoundingBox.y - nodeBoundingBox.y) <= this.node.getComponent(UITransform).height / 2;
 
         return isIntersectOverHalfX && isIntersectOverHalfY && Intersection2D.rectRect(dragTargetBoundingBox, nodeBoundingBox);
+    }
+
+    showInCombination() {
+        this._spriteComp.color = COMBO_COLOR;
     }
 
 }

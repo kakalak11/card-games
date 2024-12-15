@@ -1,6 +1,7 @@
 import { _decorator, Component, Node, Layout, UITransform } from 'cc';
 import { CardMauBinh } from './CardMauBinh';
 import { detectAllCombinations, detectDoi, detectSanh, detectThung } from '../utils';
+import { Label } from 'cc';
 const { ccclass, property } = _decorator;
 
 @ccclass('MauBinhPlayerManager')
@@ -13,11 +14,16 @@ export class MauBinhPlayerManager extends Component {
     @property(Node) thirdChi: Node;
 
     @property(Node) dragHolder: Node;
+    @property(Node) combinationsLabels: Label[];
 
     playerHand: any = [];
     selectedHand: any = [];
     dragTarget: Node;
     result: any;
+
+    protected onLoad(): void {
+        this.combinationsLabels = (this.combinationsLabels as any)?.getComponentsInChildren(Label);
+    }
 
     setDragTarget(dragTarget) {
         if (dragTarget) {
@@ -96,6 +102,13 @@ export class MauBinhPlayerManager extends Component {
         [chi1, chi2, chi3].forEach((chi, index) => {
             const handResult = detectAllCombinations(chi);
             console.log("chi ", index + 1, " : ", handResult);
+
+            this.combinationsLabels[index].string = `Chi ${index + 1} : ${handResult.title}`;
+
+            handResult.cardList.forEach(({cardNode}) => {
+                cardNode.getComponent(CardMauBinh).showInCombination();
+            })
+
         })
 
     }
