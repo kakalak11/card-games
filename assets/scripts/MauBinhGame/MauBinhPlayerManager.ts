@@ -1,6 +1,6 @@
 import { _decorator, Component, Node, Layout, UITransform } from 'cc';
 import { CardMauBinh } from './CardMauBinh';
-import { detectDoi, detectSanh, detectThung } from '../utils';
+import { detectAllCombinations, detectDoi, detectSanh, detectThung } from '../utils';
 const { ccclass, property } = _decorator;
 
 @ccclass('MauBinhPlayerManager')
@@ -17,6 +17,7 @@ export class MauBinhPlayerManager extends Component {
     playerHand: any = [];
     selectedHand: any = [];
     dragTarget: Node;
+    result: any;
 
     setDragTarget(dragTarget) {
         if (dragTarget) {
@@ -86,21 +87,16 @@ export class MauBinhPlayerManager extends Component {
     }
 
     _calculateHand() {
+        this.result = {};
+
         const chi1 = this.playerHand.filter(({ cardNode }) => cardNode.parent.name == 'Chi1').sort((a, b) => a.numberValue - b.numberValue);
-        console.log(chi1);
+        const chi2 = this.playerHand.filter(({ cardNode }) => cardNode.parent.name == 'Chi2').sort((a, b) => a.numberValue - b.numberValue);
+        const chi3 = this.playerHand.filter(({ cardNode }) => cardNode.parent.name == 'Chi3').sort((a, b) => a.numberValue - b.numberValue);
 
-        
-        const mauThau = chi1.slice().pop();
-        // detect Sảnh
-        const { foundSanh, aceHigh } = detectSanh(chi1);
-        // detect Thùng
-        const foundThung = detectThung(chi1);
-        // detect Thùng Phá Sảnh
-        const foundThungPhaSanh = foundThung && foundSanh;
-        // detect Đôi / Thú / Sám / Cù Lũ / Tứ Quý
-        const { foundDoi, foundSam, foundThu, foundTuQuy, foundCuLu } = detectDoi(chi1);
-        const foundSanhRong = foundThungPhaSanh && aceHigh;
-
+        [chi1, chi2, chi3].forEach((chi, index) => {
+            const handResult = detectAllCombinations(chi);
+            console.log("chi ", index + 1, " : ", handResult);
+        })
 
     }
 

@@ -130,24 +130,25 @@ export function findCardByValue(chi, numberValue, cacheCard = []) {
 export function detectSanh(chi) {
     let foundSanh;
     let aceHigh;
+    let cardList = [];
 
     for (let i = 0; i < chi.length; i++) {
         let currCard = chi[i];
-        let countCard = 0;
+        cardList = [];
 
         while (currCard) {
+            cardList.push(currCard);
             currCard = findCardByValue(chi, currCard.numberValue + 1);
-            countCard++;
         }
 
-        foundSanh = countCard == 5;
+        foundSanh = cardList.length == 5;
         if (foundSanh) {
             aceHigh = chi.pop().numberValue == 13;
             break;
         }
     }
 
-    return { foundSanh, aceHigh };
+    return { foundSanh, cardList, aceHigh };
 }
 
 export function findCardBySuit(chi, suit, cacheCard) {
@@ -160,23 +161,22 @@ export function findCardBySuit(chi, suit, cacheCard) {
 
 export function detectThung(chi) {
     let foundThung;
+    let cardList = [];
 
     for (let i = 0; i < chi.length; i++) {
         let currCard = chi[i];
-        let countCard = 0;
-        let cacheCard = [];
+        cardList = [];
 
         while (currCard) {
-            cacheCard.push(currCard);
-            currCard = findCardBySuit(chi, currCard.suit, cacheCard);
-            countCard++;
+            cardList.push(currCard);
+            currCard = findCardBySuit(chi, currCard.suit, cardList);
         }
 
-        foundThung = countCard == 5;
+        foundThung = cardList.length == 5;
         if (foundThung) break;
     }
 
-    return foundThung;
+    return { foundThung, cardList };
 }
 
 export function detectDoi(chi) {
@@ -186,23 +186,22 @@ export function detectDoi(chi) {
     let foundTuQuy;
     let foundCuLu;
     let seen = {};
+    let cardList = [];
 
     for (let i = 0; i < chi.length; i++) {
         let currCard = chi[i];
-        let countCard = 0;
-        let cacheCard = [];
+        let cache = [];
 
         if (seen[currCard.numberValue]) continue;
         seen[currCard.numberValue] = true;
 
         while (currCard) {
-            cacheCard.push(currCard);
-            currCard = findCardByValue(chi, currCard.numberValue, cacheCard);
-            countCard++;
+            cache.push(currCard);
+            currCard = findCardByValue(chi, currCard.numberValue, cache);
         }
 
 
-        switch (countCard) {
+        switch (cache.length) {
             case 2:
                 if (foundDoi) {
                     foundThu = true;
@@ -217,6 +216,10 @@ export function detectDoi(chi) {
                 foundTuQuy = true;
                 break;
         }
+
+        if (cache.length > 1) {
+            cardList = cardList.concat(cache);
+        }
     }
 
     if (foundDoi && foundSam) {
@@ -225,5 +228,102 @@ export function detectDoi(chi) {
         foundSam = false;
     }
 
-    return { foundDoi, foundSam, foundThu, foundTuQuy, foundCuLu };
+    return { foundDoi, foundSam, foundThu, foundTuQuy, foundCuLu, cardList };
+}
+
+export function detectAllCombinations(chi = []) {
+    let result: any = {};
+    let cardList = [];
+    let seen = {};
+
+    for (let i = 0; i < chi.length; i++) {
+        let currCard = chi[i];
+        cardList = [];
+
+        while (currCard) {
+            cardList.push(currCard);
+            currCard = findCardByValue(chi, currCard.numberValue + 1);
+        }
+
+        if (cardList.length == 5) {
+            result = Object.assign(result, {
+                aceHigh: [...chi].pop().numberValue == 13,
+                foundStraight: true,
+                cardList
+            });
+
+            break;
+        }
+    }
+
+    for (let i = 0; i < chi.length; i++) {
+        let currCard = chi[i];
+        cardList = [];
+
+        while (currCard) {
+            cardList.push(currCard);
+            currCard = findCardBySuit(chi, currCard.suit, cardList);
+        }
+
+        if (cardList.length == 5) {
+            result = Object.assign(result, {
+                foundFlush: true,
+                cardList
+            });
+
+            break;
+        }
+    }
+
+    for (let i = 0; i < chi.length; i++) {
+        let currCard = chi[i];
+        let cache = [];
+
+        if (seen[currCard.numberValue]) continue;
+        seen[currCard.numberValue] = true;
+
+        while (currCard) {
+            cache.push(currCard);
+            currCard = findCardByValue(chi, currCard.numberValue, cache);
+        }
+
+
+        switch (cache.length) {
+            case 2:
+                if (result.foundPair) {
+                    result = Object.assign(result, {
+                        found2Pairs: true,
+                        cardList
+                    });
+                    delete result.foundPair;
+                } else {
+                    result = Object.assign(result, {
+                        foundPair: true,
+                        cardList
+                    });
+                }
+                break;
+            case 3:
+                result = Object.assign(result, {
+                    found3Kinds: true,
+                    cardList
+                });
+                break;
+            case 4:
+                result = Object.assign(result, {
+                    found4Kinds: true,
+                    cardList
+                });
+                break;
+        }
+    }
+
+    if (Object.keys(result).length == 0) {
+        result = Object.assign(result, {
+            cardList: [...chi].pop(),
+            isHighCard: true
+        });
+    }
+
+    return result;
 }
