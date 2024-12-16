@@ -249,7 +249,7 @@ export function detectAllCombinations(chi = []) {
             result = Object.assign(result, {
                 aceHigh: [...chi].pop().numberValue == 13,
                 foundStraight: true,
-                title: "Thùng",
+                title: "Sảnh",
                 cardList: cardList.slice(),
             });
 
@@ -269,7 +269,7 @@ export function detectAllCombinations(chi = []) {
         if (cardList.length == 5) {
             result = Object.assign(result, {
                 foundFlush: true,
-                title: "Sảnh",
+                title: "Thùng",
                 cardList: cardList.slice(),
             });
 

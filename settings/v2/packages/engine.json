@@ -95,10 +95,10 @@
         "_value": true
       },
       "websocket": {
-        "_value": false
+        "_value": true
       },
       "websocket-server": {
-        "_value": false
+        "_value": true
       },
       "terrain": {
         "_value": false
@@ -135,7 +135,9 @@
       "intersection-2d",
       "profiler",
       "tween",
-      "ui"
+      "ui",
+      "websocket",
+      "websocket-server"
     ],
     "noDeprecatedFeatures": {
       "value": false,
