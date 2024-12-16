@@ -2,9 +2,9 @@ import { MauBinhPlayerManager } from './MauBinhPlayerManager';
 import { getDeck, shuffle } from '../utils';
 import {
     _decorator, Component, Node, v3, resources,
-    SpriteFrame, error, instantiate, Sprite, Prefab
+    SpriteFrame, error, instantiate, Sprite, Prefab,
+    Label, Button
 } from 'cc';
-import { Button } from 'cc';
 const { ccclass, property } = _decorator;
 
 @ccclass('MauBinhGameManager')
@@ -13,6 +13,7 @@ export class MauBinhGameManager extends Component {
     @property(Node) player: MauBinhPlayerManager;
     @property(Prefab) cardPrefab: Prefab;
     @property(Button) readyBtn: Button;
+    @property(Label) countDownTimer: Label;
 
     _socket: any;
 
@@ -34,11 +35,32 @@ export class MauBinhGameManager extends Component {
     }
 
     gameStart(data) {
+        const { gameStartTimeout, playerHand } = data;
 
-        this.loadHand(data)
+        this.startCountDown(gameStartTimeout);
+        this.loadHand(playerHand)
             .then((result) => {
                 this.player.setPlayerHand(result);
             })
+    }
+
+    startCountDown(time) {
+        let _time = time;
+        this.countDownTimer.string = `Time: ${_time}`;
+
+        const updateTime = () => {
+            _time--;
+            this.countDownTimer.string = `Time: ${_time}`;
+        }
+
+        this.schedule(() => {
+            if (_time <= 0) {
+                this.unschedule(updateTime);
+            } else {
+                updateTime();
+            }
+        }, 1);
+
     }
 
     loadHand(hand) {
@@ -93,8 +115,19 @@ export class MauBinhGameManager extends Component {
                 console.log("[ServerEvent] game start", data);
                 this.gameStart(eventData);
                 break;
+            case "game-start-timeout":
+                console.log("[ServerEvent] game start timeout", data);
+                this.sendPlayerHandData();
+                break;
         }
 
+    }
+
+    sendPlayerHandData() {
+        const handData = this.player.getHandData();
+        const request = { event: "game-result", data: { handData } };
+
+        this._socket.emit("client_event", request);
     }
 
 }

@@ -106,6 +106,7 @@ export class MauBinhPlayerManager extends Component {
         const chi2 = this.playerHand.filter(({ cardNode }) => cardNode.parent.name == 'Chi2').sort((a, b) => a.numberValue - b.numberValue);
         const chi3 = this.playerHand.filter(({ cardNode }) => cardNode.parent.name == 'Chi3').sort((a, b) => a.numberValue - b.numberValue);
 
+        console.log(chi1, chi2);
         [chi1, chi2, chi3].forEach((chi, index) => {
             const handResult = detectAllCombinations(chi);
             // console.log("chi ", index + 1, " : ", handResult);
@@ -118,6 +119,29 @@ export class MauBinhPlayerManager extends Component {
             this.result[`chi${index + 1}`] = handResult;
         });
         console.log(this.result);
+    }
+
+    getHandData() {
+        const chi1 = this.playerHand.filter(({ cardNode }) => cardNode.parent.name == 'Chi1');
+        const chi2 = this.playerHand.filter(({ cardNode }) => cardNode.parent.name == 'Chi2');
+        const chi3 = this.playerHand.filter(({ cardNode }) => cardNode.parent.name == 'Chi3');
+
+        // const handData = this.playerHand.map((card) => {
+        //     const { suit, value, numberValue } = card;
+        //     return Object.assign({}, { suit, value, numberValue });
+        // });
+
+        const handData = [];
+        const allChi = [chi1, chi2, chi3];
+
+        for (let i = 0; i < allChi.length; i++) {
+            handData.push(allChi[i].map((card) => {
+                const { suit, value, numberValue } = card;
+                return Object.assign({}, { suit, value, numberValue });
+            }));
+        }
+
+        return handData;
     }
 
     clickXepBai() {

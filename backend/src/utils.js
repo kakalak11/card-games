@@ -61,108 +61,12 @@ export function findCardByValue(chi, numberValue, cacheCard = []) {
     });
 }
 
-export function detectSanh(chi) {
-    let foundSanh;
-    let aceHigh;
-    let cardList = [];
-
-    for (let i = 0; i < chi.length; i++) {
-        let currCard = chi[i];
-        cardList = [];
-
-        while (currCard) {
-            cardList.push(currCard);
-            currCard = findCardByValue(chi, currCard.numberValue + 1);
-        }
-
-        foundSanh = cardList.length == 5;
-        if (foundSanh) {
-            aceHigh = chi.pop().numberValue == 13;
-            break;
-        }
-    }
-
-    return { foundSanh, cardList, aceHigh };
-}
-
 export function findCardBySuit(chi, suit, cacheCard) {
     return chi.find(card => {
         if (card.suit == suit && cacheCard.findIndex(_card => _card === card) === -1) {
             return card;
         }
     });
-}
-
-export function detectThung(chi) {
-    let foundThung;
-    let cardList = [];
-
-    for (let i = 0; i < chi.length; i++) {
-        let currCard = chi[i];
-        cardList = [];
-
-        while (currCard) {
-            cardList.push(currCard);
-            currCard = findCardBySuit(chi, currCard.suit, cardList);
-        }
-
-        foundThung = cardList.length == 5;
-        if (foundThung) break;
-    }
-
-    return { foundThung, cardList };
-}
-
-export function detectDoi(chi) {
-    let foundDoi;
-    let foundSam;
-    let foundThu;
-    let foundTuQuy;
-    let foundCuLu;
-    let seen = {};
-    let cardList = [];
-
-    for (let i = 0; i < chi.length; i++) {
-        let currCard = chi[i];
-        let cache = [];
-
-        if (seen[currCard.numberValue]) continue;
-        seen[currCard.numberValue] = true;
-
-        while (currCard) {
-            cache.push(currCard);
-            currCard = findCardByValue(chi, currCard.numberValue, cache);
-        }
-
-
-        switch (cache.length) {
-            case 2:
-                if (foundDoi) {
-                    foundThu = true;
-                } else {
-                    foundDoi = true;
-                }
-                break;
-            case 3:
-                foundSam = true;
-                break;
-            case 4:
-                foundTuQuy = true;
-                break;
-        }
-
-        if (cache.length > 1) {
-            cardList = cardList.concat(cache);
-        }
-    }
-
-    if (foundDoi && foundSam) {
-        foundCuLu = true;
-        foundDoi = false;
-        foundSam = false;
-    }
-
-    return { foundDoi, foundSam, foundThu, foundTuQuy, foundCuLu, cardList };
 }
 
 export function detectAllCombinations(chi = []) {
@@ -185,6 +89,7 @@ export function detectAllCombinations(chi = []) {
                 foundStraight: true,
                 title: "Sảnh",
                 cardList: cardList.slice(),
+                cardRank: 5
             });
 
             break;
@@ -205,6 +110,7 @@ export function detectAllCombinations(chi = []) {
                 foundFlush: true,
                 title: "Thùng",
                 cardList: cardList.slice(),
+                cardRank: 6
             });
 
             break;
@@ -212,14 +118,26 @@ export function detectAllCombinations(chi = []) {
     }
 
     if (result.foundFlush && result.foundStraight) {
-        result = Object.assign(result, {
-            foundStraightFlush: true,
-            title: "Thùng Phá Sảnh",
-            cardList: cardList.slice(),
-        });
+        const aceHigh = result.aceHigh;
+        if (aceHigh) {
+            result = Object.assign(result, {
+                foundRoyalFlush: true,
+                title: "Sảnh Rồng",
+                cardList: cardList.slice(),
+                cardRank: 10
+            });
+        } else {
+            result = Object.assign(result, {
+                foundStraightFlush: true,
+                title: "Thùng Phá Sảnh",
+                cardList: cardList.slice(),
+                cardRank: 9
+            });
+        }
         delete result.foundFlush;
         delete result.foundStraight;
     }
+
     cardList = [];
     for (let i = 0; i < chi.length; i++) {
         let currCard = chi[i];
@@ -239,14 +157,16 @@ export function detectAllCombinations(chi = []) {
                     result = Object.assign(result, {
                         found2Pairs: true,
                         title: "Thú",
-                        cardList: cardList.concat(cache)
+                        cardList: cardList.concat(cache),
+                        cardRank: 3
                     });
                     delete result.foundPair;
                 } else {
                     result = Object.assign(result, {
                         foundPair: true,
                         title: "Đôi",
-                        cardList: cardList.concat(cache)
+                        cardList: cardList.concat(cache),
+                        cardRank: 2
                     });
                 }
                 cardList = result.cardList.slice();
@@ -255,7 +175,8 @@ export function detectAllCombinations(chi = []) {
                 result = Object.assign(result, {
                     found3Kinds: true,
                     title: "Sám",
-                    cardList: cardList.concat(cache)
+                    cardList: cardList.concat(cache),
+                    cardRank: 4
                 });
                 cardList = result.cardList.slice();
                 break;
@@ -263,7 +184,8 @@ export function detectAllCombinations(chi = []) {
                 result = Object.assign(result, {
                     found4Kinds: true,
                     title: "Tứ Quý",
-                    cardList: cardList.concat(cache)
+                    cardList: cardList.concat(cache),
+                    cardRank: 8
                 });
                 cardList = result.cardList.slice();
                 break;
@@ -274,7 +196,8 @@ export function detectAllCombinations(chi = []) {
         result = Object.assign(result, {
             foundFullHouse: true,
             title: "Cù Lũ",
-            cardList: cardList.slice()
+            cardList: cardList.slice(),
+            cardRank: 7
         });
         delete result.foundPair;
         delete result.found3Kinds;
@@ -284,7 +207,8 @@ export function detectAllCombinations(chi = []) {
         result = Object.assign(result, {
             cardList: [[...chi].pop()],
             title: "Mậu Thầu",
-            isHighCard: true
+            isHighCard: true,
+            cardRank: 1
         });
     }
 
