@@ -108,7 +108,7 @@ export class MauBinhPlayerManager extends Component {
 
         [chi1, chi2, chi3].forEach((chi, index) => {
             const handResult = detectAllCombinations(chi);
-            console.log("chi ", index + 1, " : ", handResult);
+            // console.log("chi ", index + 1, " : ", handResult);
 
             this.combinationsLabels[index].string = `Chi ${index + 1} : ${handResult.title}`;
             handResult.cardList.forEach(({ cardNode }) => {

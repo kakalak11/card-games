@@ -1,10 +1,8 @@
 import { _decorator, Component, Node } from 'cc';
 const { ccclass, property } = _decorator;
 
-
-
-@ccclass('testServer')
-export class testServer extends Component {
+@ccclass('MauBinhServer')
+export class MauBinhServer extends Component {
 
     _socket: any;
 
