@@ -7,6 +7,8 @@ import {
 } from 'cc';
 const { ccclass, property } = _decorator;
 
+const ROOM_NAME = "MauBinhForever";
+
 @ccclass('MauBinhGameManager')
 export class MauBinhGameManager extends Component {
 
@@ -91,20 +93,30 @@ export class MauBinhGameManager extends Component {
     }
 
     onClickReady() {
-        this._socket.emit('client_event', { event: "game-ready" });
+        this._socket.emit('client_event', { event: "player-ready" });
         this.readyBtn.interactable = false;
+    }
+
+    onJoinRoom() {
+        this._socket.emit("join_room", ROOM_NAME, this.onJoinRoomSuccessfully.bind(this))
+    }
+
+    onJoinRoomSuccessfully(msg) {
+        console.log("=== Join room success ===");
+        console.log(msg);
+    }
+
+    onServerNotify(msg) {
+        console.log(msg);
     }
 
     initSocket() {
         if (!this._socket) throw new Error("Socket was not inited");
 
-        this._socket.on('connect', this.onConnect.bind(this));
         this._socket.on('server_event', this.onServerEvent.bind(this));
-    }
+        this._socket.on('notify', this.onServerNotify.bind(this));
 
-    onConnect() {
-        console.log('Connected to server!');
-        this._socket.emit('client_event', { user: "kakalak" });
+        this._socket.emit("new_user", Math.random() > 0.5 ? "kakalak" : "hihi");
     }
 
     onServerEvent(data) {
@@ -130,4 +142,7 @@ export class MauBinhGameManager extends Component {
         this._socket.emit("client_event", request);
     }
 
+    protected onDestroy(): void {
+        if (this._socket) this._socket.disconnect();
+    }
 }
