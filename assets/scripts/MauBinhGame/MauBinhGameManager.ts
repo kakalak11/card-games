@@ -5,6 +5,7 @@ import {
     SpriteFrame, error, instantiate, Sprite, Prefab,
     Label, Button
 } from 'cc';
+import { MauBinhRoomInfo } from './MauBinhRoomInfo';
 const { ccclass, property } = _decorator;
 
 const ROOM_NAME = "MauBinhForever";
@@ -13,16 +14,21 @@ const ROOM_NAME = "MauBinhForever";
 export class MauBinhGameManager extends Component {
 
     @property(Node) player: MauBinhPlayerManager;
+    @property(Node) roomInfo: MauBinhRoomInfo;
     @property(Prefab) cardPrefab: Prefab;
     @property(Button) readyBtn: Button;
     @property(Label) countDownTimer: Label;
 
     _socket: any;
+    _playerName: string;
 
     protected onLoad(): void {
         this.player = this.player?.getComponent(MauBinhPlayerManager);
+        this.roomInfo = this.roomInfo?.getComponent(MauBinhRoomInfo);
         // @ts-ignore
         this._socket = window.io('http://localhost:3000');
+        const randomNames = ["kakalak", "hihi", "haha", "foo", "bar"];
+        this._playerName = randomNames[Math.floor(Math.random() * randomNames.length)] ;
     }
 
     protected start(): void {
@@ -98,25 +104,33 @@ export class MauBinhGameManager extends Component {
     }
 
     onJoinRoom() {
-        this._socket.emit("join_room", ROOM_NAME, this.onJoinRoomSuccessfully.bind(this))
+        this._socket.emit("join_room", ROOM_NAME);
     }
 
-    onJoinRoomSuccessfully(msg) {
-        console.log("=== Join room success ===");
-        console.log(msg);
+    onUserJoinRoom({ roomInfo, roomMsg, player }) {
+        if (player.name !== this._playerName) {
+            console.log(`=== Player ${player.name} has entered the room ===`);
+        }
+        console.log(roomMsg);
+        this.roomInfo.updateRoomInfo(roomInfo);
     }
 
-    onServerNotify(msg) {
-        console.log(msg);
+    onUserLeaveRoom({ roomInfo, roomMsg, player }) {
+        if (player.name !== this._playerName) {
+            console.log(`=== Player ${player.name} has left the room ===`);
+        }
+        console.log(roomMsg);
+        this.roomInfo.updateRoomInfo(roomInfo);
     }
 
     initSocket() {
         if (!this._socket) throw new Error("Socket was not inited");
 
         this._socket.on('server_event', this.onServerEvent.bind(this));
-        this._socket.on('notify', this.onServerNotify.bind(this));
+        this._socket.on('on_user_join_room', this.onUserJoinRoom.bind(this));
+        this._socket.on("on_user_leave_room", this.onUserLeaveRoom.bind(this));
 
-        this._socket.emit("new_user", Math.random() > 0.5 ? "kakalak" : "hihi");
+        this._socket.emit("new_user", this._playerName);
     }
 
     onServerEvent(data) {

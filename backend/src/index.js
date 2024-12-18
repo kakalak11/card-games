@@ -14,12 +14,13 @@ let gameResultTimeOutId;
 let _roomName = "MauBinhForever";
 let rooms = {
     "MauBinhForever": {
-
+        players: []
     }
 }
 
 let players = []
 
+console.clear();
 io.on('connection', (socket) => {
     console.log('=== New Socket Init ===');
 
@@ -33,17 +34,23 @@ io.on('connection', (socket) => {
             id: socket.id
         };
         players.push(player);
+        console.log(players);
     });
 
     socket.on("disconnect", () => {
         const player = players.find(player => player.id === socket.id);
         players = players.filter(player => player.id !== socket.id);
 
+        const roomPlayers = rooms[_roomName].players.slice();
+        rooms[_roomName].players = roomPlayers.filter(player => player.id !== socket.id);
+
+        const roomMsg = `=== Player ${player?.name} has left the room ===`;
+
         console.log(`Player ${player?.name} has disconnected !`);
+        io.to(_roomName).emit("on_user_leave_room", { roomInfo: getRoomInfo(_roomName), roomMsg, player });
     });
 
     socket.on("join_room", (roomName, callback) => {
-        socket.join(roomName);
         let roomSize
 
         try {
@@ -52,18 +59,57 @@ io.on('connection', (socket) => {
             console.log(`There is no room ${roomName}`);
         }
 
-        if (roomSize == 2) {
-            callback("=== Game can start now ===");
-        } else {
-            callback("=== Waiting for players ===");
+        const player = players.find(player => player.id === socket.id);
+        if (rooms[roomName]) {
+            rooms[roomName].players.push(player);
         }
 
-        io.to(roomName).emit("notify", "=== A player has enter the room ===");
+        let roomMsg = "";
+        if (roomSize == 2) {
+            roomMsg = "=== Game can start now ===";
+        } else {
+            roomMsg = "=== Waiting for players ===";
+        }
+        socket.join(roomName);
 
+        io.to(roomName).emit("on_user_join_room", { roomInfo: getRoomInfo(_roomName), roomMsg, player });
     });
 
+});
 
-    socket.on('client_event', (response) => {
+function handleGameReady() {
+    const mauBinhDeck = getDeck(true);
+
+    const deckLength = mauBinhDeck.length;
+    shuffle(mauBinhDeck);
+
+    let playerHand = [];
+    for (let i = 0; i < deckLength; i++) {
+        if (i % 4 == 0) {
+            playerHand.push(mauBinhDeck.pop());
+        }
+    }
+
+    return { event: "game-start", eventData: { playerHand } };
+}
+
+function handleGameResult(response) {
+    const { data } = response;
+
+
+    data.handData.forEach(chi => {
+        console.log(detectAllCombinations(chi));
+    })
+}
+
+function getRoomInfo(roomName) {
+    const players = rooms[roomName].players.map(player => player?.name);
+    const roomInfo = Object.assign({}, { roomName, players });
+    return roomInfo;
+}
+
+/*
+socket.on('client_event', (response) => {
         console.log('Received response from client:', response, socket.id);
         const { event } = response;
         switch (event) {
@@ -94,40 +140,4 @@ io.on('connection', (socket) => {
         }
 
     });
-
-
-
-});
-
-io.on("disconnect", (socket) => {
-    console.log('Client disconnected!');
-
-    if (gameResultTimeOutId) {
-        clearTimeout(gameResultTimeOutId);
-    }
-})
-
-function handleGameReady() {
-    const mauBinhDeck = getDeck(true);
-
-    const deckLength = mauBinhDeck.length;
-    shuffle(mauBinhDeck);
-
-    let playerHand = [];
-    for (let i = 0; i < deckLength; i++) {
-        if (i % 4 == 0) {
-            playerHand.push(mauBinhDeck.pop());
-        }
-    }
-
-    return { event: "game-start", eventData: { playerHand } };
-}
-
-function handleGameResult(response) {
-    const { data } = response;
-
-
-    data.handData.forEach(chi => {
-        console.log(detectAllCombinations(chi));
-    })
-}
+*/
