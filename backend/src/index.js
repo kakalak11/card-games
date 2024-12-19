@@ -15,10 +15,11 @@ let _roomName = "MauBinhForever";
 let rooms = {
     "MauBinhForever": {
         players: [],
+        countSentData: 0
     }
 }
 
-let players = []
+let players = [];
 
 console.clear();
 io.on('connection', (socket) => {
@@ -90,7 +91,38 @@ io.on('connection', (socket) => {
         }
     });
 
+    socket.on("user_send_hand", (handData) => {
+        const player = players.find(_player => _player.id === socket.id);
+        console.log(`=== Player ${player?.name} has send hand data ===`);
+
+        player.handResult = [];
+        handData.forEach((chi) => {
+            player.handResult.push(detectAllCombinations(chi));
+        });
+
+        const playerRoom = rooms[player.room]
+        playerRoom.countSentData++;
+        if (playerRoom.countSentData == playerRoom.players.length) {
+            handleGameResult(player.room);
+        }
+    });
+
 });
+
+function handleGameResult(roomName) {
+    const roomPlayers = rooms[roomName].players;
+    let result = [];
+
+    let allFirstChi = roomPlayers.map(player => ({ cardRank: player.handResult[0].cardRank, id: player.id })).sort((a, b) => a.cardRank - b.cardRank);
+    let allSecondChi = roomPlayers.map(player => ({ cardRank: player.handResult[1].cardRank, id: player.id })).sort((a, b) => a.cardRank - b.cardRank);
+    let allThirdChi = roomPlayers.map(player => ({ cardRank: player.handResult[2].cardRank, id: player.id })).sort((a, b) => a.cardRank - b.cardRank);
+
+    result = [allFirstChi.pop(), allSecondChi.pop(), allThirdChi.pop()];
+
+    let winnerEachChi = result.map(({ id }) => { return roomPlayers.find(_player => _player.id === id) });
+
+    io.in(roomName).emit("on_game_result", winnerEachChi);
+}
 
 function handleGameStart(roomName) {
     const mauBinhDeck = getDeck(true);
@@ -114,16 +146,6 @@ function handleGameStart(roomName) {
     })
 }
 
-function handleGameReady() {
-    const mauBinhDeck = getDeck(true);
-    const deckLength = mauBinhDeck.length;
-
-    let playerHand = [];
-
-
-    return { event: "game-start", eventData: { playerHand } };
-}
-
 function handleUserLeaveRoom(player, roomName) {
     const roomMsg = `=== Player ${player?.name} has left the room ===`;
 
@@ -133,51 +155,8 @@ function handleUserLeaveRoom(player, roomName) {
     io.to(_roomName).emit("on_user_leave_room", { roomInfo: getRoomInfo(_roomName), roomMsg, player });
 }
 
-function handleGameResult(response) {
-    const { data } = response;
-
-
-    data.handData.forEach(chi => {
-        console.log(detectAllCombinations(chi));
-    })
-}
-
 function getRoomInfo(roomName) {
     const players = rooms[roomName].players.map(player => player?.name);
     const roomInfo = Object.assign({}, { roomName, players });
     return roomInfo;
 }
-
-/*
-socket.on('client_event', (response) => {
-        console.log('Received response from client:', response, socket.id);
-        const { event } = response;
-        switch (event) {
-            case "player-ready":
-                countReady++;
-                console.log("[ClientEvent] player ready ", countReady);
-                if (countReady !== roomSize) {
-                    break;
-                }
-
-            case "game-ready":
-                console.log("[ClientEvent] game ready");
-                const gameStartTimeout = 5;
-                const _response = handleGameReady();
-
-                _response.eventData = Object.assign(_response.eventData, { gameStartTimeout });
-
-                socket.emit('server_event', _response);
-                gameResultTimeOutId = setTimeout(() => {
-                    socket.emit('server_event', { event: "game-start-timeout" });
-                }, gameStartTimeout * 1000);
-                break;
-
-            case "game-result":
-                console.log("[ClientEvent] game result");
-                handleGameResult(response);
-                break;
-        }
-
-    });
-*/

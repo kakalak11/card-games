@@ -142,20 +142,15 @@ export class MauBinhGameManager extends Component {
         this._socket.on("on_user_leave_room", this.onUserLeaveRoom.bind(this));
 
         this._socket.on("on_user_deal_cards", this.onUserDealCards.bind(this));
+        this._socket.on("on_game_result", this.onGameResult.bind(this))
         this._socket.on("on_notify_game_state", this.onNotifyGameState.bind(this))
+        
 
         this._socket.emit("new_user", this._playerName);
     }
 
     onNotifyGameState(message) {
         console.log(message);
-    }
-
-    sendPlayerHandData() {
-        const handData = this.player.getHandData();
-        const request = { event: "game-result", data: { handData } };
-
-        this._socket.emit("client_event", request);
     }
 
     protected onDestroy(): void {
@@ -169,6 +164,23 @@ export class MauBinhGameManager extends Component {
         this.loadHand(hand)
             .then((result) => {
                 this.player.setPlayerHand(result);
-            })
+                let countDownTime = 10;
+
+                this.startCountDown(countDownTime);
+                this.scheduleOnce(() => {
+                    this.sendPlayerHandData();
+                }, countDownTime);
+            });
     }
+
+    sendPlayerHandData() {
+        const handData = this.player.getHandData();
+
+        this._socket.emit("user_send_hand", handData);
+    }
+
+    onGameResult(winnerEachChi) {
+        console.log(winnerEachChi);
+    }
+
 }
