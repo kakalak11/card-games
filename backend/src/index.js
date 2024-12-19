@@ -14,7 +14,7 @@ let gameResultTimeOutId;
 let _roomName = "MauBinhForever";
 let rooms = {
     "MauBinhForever": {
-        players: []
+        players: [],
     }
 }
 
@@ -24,73 +24,113 @@ console.clear();
 io.on('connection', (socket) => {
     console.log('=== New Socket Init ===');
 
-    // const roomSize = io.sockets.adapter.rooms.get(roomId).size;
-    // console.log(`Room ${roomId} has ${roomSize} sockets.`);
-
     socket.on("new_user", (playerName) => {
         console.log(`Player ${playerName} has connected !`);
         const player = {
             name: playerName,
-            id: socket.id
+            id: socket.id,
+            isReady: false,
+            hand: []
         };
         players.push(player);
-        console.log(players);
     });
 
-    socket.on("disconnect", () => {
+    socket.on("disconnect", (reason) => {
+        const player = players.find(o => o.id === socket.id);
+
+        console.log(`=== Player ${player?.name} has disconnected ===`);
+        console.log(`=== Reason: ${reason} ===`);
+
+        if (socket.rooms.has(_roomName)) {
+            handleUserLeaveRoom(player, _roomName);
+        }
+    });
+
+    socket.on("join_room", (roomName, callbackError) => {
+
         const player = players.find(player => player.id === socket.id);
-        players = players.filter(player => player.id !== socket.id);
 
-        const roomPlayers = rooms[_roomName].players.slice();
-        rooms[_roomName].players = roomPlayers.filter(player => player.id !== socket.id);
-
-        const roomMsg = `=== Player ${player?.name} has left the room ===`;
-
-        console.log(`Player ${player?.name} has disconnected !`);
-        io.to(_roomName).emit("on_user_leave_room", { roomInfo: getRoomInfo(_roomName), roomMsg, player });
-    });
-
-    socket.on("join_room", (roomName, callback) => {
-        let roomSize
-
-        try {
-            roomSize = io.sockets.adapter.rooms.get(roomName).size;
-        } catch (err) {
-            console.log(`There is no room ${roomName}`);
+        if (socket.rooms.has(roomName)) {
+            return callbackError("=== Player already in this room ===");
         }
 
-        const player = players.find(player => player.id === socket.id);
         if (rooms[roomName]) {
             rooms[roomName].players.push(player);
-        }
-
-        let roomMsg = "";
-        if (roomSize == 2) {
-            roomMsg = "=== Game can start now ===";
-        } else {
-            roomMsg = "=== Waiting for players ===";
+            player.room = roomName;
         }
         socket.join(roomName);
+        const roomInfo = getRoomInfo(roomName);
+        console.log(roomInfo);
 
-        io.to(roomName).emit("on_user_join_room", { roomInfo: getRoomInfo(_roomName), roomMsg, player });
+        io.to(roomName).emit("on_user_join_room", { roomInfo, player });
+    });
+
+    socket.on("leave_room", (roomName) => {
+        const player = players.find(_player => _player.id === socket.id);
+        player.room = null;
+        handleUserLeaveRoom(player, roomName);
+    });
+
+    socket.on("user_ready_game", (callbackError) => {
+        const player = players.find(_player => _player.id === socket.id);
+
+        if (player.room == null) {
+            return callbackError("=== Player is not in any game room ===");
+        } else {
+            player.isReady = true;
+        }
+
+        const minReadyNums = 2;
+        const readyNums = rooms[player.room].players.filter(player => player.isReady).length;
+
+        if (readyNums >= minReadyNums) {
+            handleGameStart(player.room);
+        } else {
+            io.to(player.room).emit("on_notify_game_state", `=== Waiting for ${minReadyNums - readyNums} more players for game to start ===`);
+        }
     });
 
 });
 
-function handleGameReady() {
+function handleGameStart(roomName) {
     const mauBinhDeck = getDeck(true);
-
     const deckLength = mauBinhDeck.length;
-    shuffle(mauBinhDeck);
+    const roomPlayers = rooms[roomName].players;
 
-    let playerHand = [];
     for (let i = 0; i < deckLength; i++) {
-        if (i % 4 == 0) {
-            playerHand.push(mauBinhDeck.pop());
+        const currIndex = i % 4;
+        if (currIndex > roomPlayers.length - 1) {
+            mauBinhDeck.pop()
+            continue;
         }
+        roomPlayers[currIndex].hand.push(mauBinhDeck.pop());
     }
 
+    io.in(roomName).fetchSockets().then(sockets => {
+        sockets.forEach(socket => {
+            const playerHand = roomPlayers.find(player => player.id == socket.id).hand;
+            socket.emit("on_user_deal_cards", playerHand);
+        })
+    })
+}
+
+function handleGameReady() {
+    const mauBinhDeck = getDeck(true);
+    const deckLength = mauBinhDeck.length;
+
+    let playerHand = [];
+
+
     return { event: "game-start", eventData: { playerHand } };
+}
+
+function handleUserLeaveRoom(player, roomName) {
+    const roomMsg = `=== Player ${player?.name} has left the room ===`;
+
+    players = players.filter(o => o.id !== player.id);
+    rooms[roomName].players = rooms[roomName].players.filter(o => o.id !== player.id);
+
+    io.to(_roomName).emit("on_user_leave_room", { roomInfo: getRoomInfo(_roomName), roomMsg, player });
 }
 
 function handleGameResult(response) {

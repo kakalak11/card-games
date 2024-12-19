@@ -16,8 +16,12 @@ export class MauBinhGameManager extends Component {
     @property(Node) player: MauBinhPlayerManager;
     @property(Node) roomInfo: MauBinhRoomInfo;
     @property(Prefab) cardPrefab: Prefab;
-    @property(Button) readyBtn: Button;
     @property(Label) countDownTimer: Label;
+
+    @property(Button) readyBtn: Button;
+    @property(Button) joinRoomBtn: Button;
+    @property(Button) leaveRoomBtn: Button;
+
 
     _socket: any;
     _playerName: string;
@@ -28,28 +32,14 @@ export class MauBinhGameManager extends Component {
         // @ts-ignore
         this._socket = window.io('http://localhost:3000');
         const randomNames = ["kakalak", "hihi", "haha", "foo", "bar"];
-        this._playerName = randomNames[Math.floor(Math.random() * randomNames.length)] ;
+        this._playerName = randomNames[Math.floor(Math.random() * randomNames.length)];
     }
 
     protected start(): void {
-        try {
-            this.initSocket();
-            this.readyBtn.interactable = true;
-        } catch (err) {
-            if (err) console.log("Go Offline mode");
-            this.readyBtn.interactable = false;
-            this.gameStart(getDeck(true));
-        }
-    }
-
-    gameStart(data) {
-        const { gameStartTimeout, playerHand } = data;
-
-        this.startCountDown(gameStartTimeout);
-        this.loadHand(playerHand)
-            .then((result) => {
-                this.player.setPlayerHand(result);
-            })
+        this.joinRoomBtn.interactable = true;
+        this.leaveRoomBtn.interactable = false;
+        this.readyBtn.interactable = true;
+        this.initSocket();
     }
 
     startCountDown(time) {
@@ -98,55 +88,67 @@ export class MauBinhGameManager extends Component {
             });
     }
 
-    onClickReady() {
-        this._socket.emit('client_event', { event: "player-ready" });
+    readyClick() {
+        this._socket.emit("user_ready_game");
         this.readyBtn.interactable = false;
     }
 
-    onJoinRoom() {
-        this._socket.emit("join_room", ROOM_NAME);
+    joinRoomClick() {
+        this._socket.emit("join_room", ROOM_NAME, (reason) => {
+            console.log(reason);
+            this.joinRoomBtn.interactable = true;
+            this.leaveRoomBtn.interactable = false;
+        });
+        this.joinRoomBtn.interactable = false;
     }
 
-    onUserJoinRoom({ roomInfo, roomMsg, player }) {
-        if (player.name !== this._playerName) {
+    leaveRoomClick() {
+        this._socket.emit("leave_room", ROOM_NAME);
+        this.leaveRoomBtn.interactable = false;
+    }
+
+    onUserJoinRoom({ roomInfo, player }) {
+        const isMe = player.name == this._playerName;
+        if (isMe) {
+            this.leaveRoomBtn.interactable = true;
+            this.joinRoomBtn.interactable = false;
+        } else {
             console.log(`=== Player ${player.name} has entered the room ===`);
         }
-        console.log(roomMsg);
+
         this.roomInfo.updateRoomInfo(roomInfo);
     }
 
     onUserLeaveRoom({ roomInfo, roomMsg, player }) {
-        if (player.name !== this._playerName) {
+        const isMe = player.name == this._playerName;
+        if (isMe) {
+            this.leaveRoomBtn.interactable = false;
+            this.joinRoomBtn.interactable = true;
+            this.roomInfo.resetRoomInfo();
+        } else {
             console.log(`=== Player ${player.name} has left the room ===`);
+            this.roomInfo.updateRoomInfo(roomInfo);
         }
+
         console.log(roomMsg);
-        this.roomInfo.updateRoomInfo(roomInfo);
     }
+
+
 
     initSocket() {
         if (!this._socket) throw new Error("Socket was not inited");
 
-        this._socket.on('server_event', this.onServerEvent.bind(this));
         this._socket.on('on_user_join_room', this.onUserJoinRoom.bind(this));
         this._socket.on("on_user_leave_room", this.onUserLeaveRoom.bind(this));
+
+        this._socket.on("on_user_deal_cards", this.onUserDealCards.bind(this));
+        this._socket.on("on_notify_game_state", this.onNotifyGameState.bind(this))
 
         this._socket.emit("new_user", this._playerName);
     }
 
-    onServerEvent(data) {
-        const { event, eventData } = data;
-
-        switch (event) {
-            case "game-start":
-                console.log("[ServerEvent] game start", data);
-                this.gameStart(eventData);
-                break;
-            case "game-start-timeout":
-                console.log("[ServerEvent] game start timeout", data);
-                this.sendPlayerHandData();
-                break;
-        }
-
+    onNotifyGameState(message) {
+        console.log(message);
     }
 
     sendPlayerHandData() {
@@ -158,5 +160,15 @@ export class MauBinhGameManager extends Component {
 
     protected onDestroy(): void {
         if (this._socket) this._socket.disconnect();
+    }
+
+    /** Game Logic */
+
+    onUserDealCards(hand) {
+
+        this.loadHand(hand)
+            .then((result) => {
+                this.player.setPlayerHand(result);
+            })
     }
 }

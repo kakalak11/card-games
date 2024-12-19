@@ -9,10 +9,15 @@ export class MauBinhRoomInfo extends Component {
 
     updateRoomInfo({ roomName, players }) {
         this.roomName.string = roomName;
-        this.roomPlayers.string = ""
+        this.roomPlayers.string = "";
         players.forEach(playerName => {
             this.roomPlayers.string += `${playerName}\n`;
         });
+    }
+
+    resetRoomInfo() {
+        this.roomName.string = "";
+        this.roomPlayers.string = "";
     }
 }
 
