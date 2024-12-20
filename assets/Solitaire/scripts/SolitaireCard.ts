@@ -26,5 +26,9 @@ export class SolitaireCard extends Component {
         this.faceDown.active = true;
     }
 
+    showFaceUp() {
+        this.faceDown.active = false;
+    }
+
 }
 

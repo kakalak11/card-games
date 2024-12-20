@@ -21,6 +21,7 @@ export function getDeck(isMauBinh = false) {
             deckOfCards.push(card);
         }
     }
+    shuffle(deckOfCards);
     return deckOfCards;
 }
 
