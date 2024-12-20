@@ -6,8 +6,9 @@ import { Sprite } from 'cc';
 import { SpriteFrame } from 'cc';
 import { _decorator, Component, Node } from 'cc';
 import { SolitaireCard } from './SolitaireCard';
-import { getDeck } from '../../scripts/utils';
+import { changeParent, getDeck } from '../../scripts/utils';
 import { Label } from 'cc';
+import { Button } from 'cc';
 const { ccclass, property } = _decorator;
 
 @ccclass('SolitaireManager')
@@ -17,12 +18,25 @@ export class SolitaireManager extends Component {
 
     @property(Node) stockCardsNode: Node;
     @property(Label) stockInfo: Label;
+    @property(Button) getStockButton: Button;
+
+    @property(Node) wasteCardsNode: Node;
 
     @property(Node) tableau: Node;
     @property(Node) foundations: Node;
 
     cards: SolitaireCard[] = [];
     stockCards: SolitaireCard[] = [];
+    wasteCards: SolitaireCard[] = [];
+
+    protected start(): void {
+        this.loadCards(getDeck())
+            .then(cards => {
+                this.cards = cards;
+
+                this.gameStart();
+            });
+    }
 
     loadCards(cards) {
         let allPromises = [];
@@ -52,15 +66,6 @@ export class SolitaireManager extends Component {
             });
     }
 
-    protected start(): void {
-        this.loadCards(getDeck())
-            .then(cards => {
-                this.cards = cards;
-
-                this.gameStart();
-            });
-    }
-
     gameStart() {
         const slicedCards = this.cards.slice();
         const tableauPiles = this.tableau.children.slice();
@@ -79,7 +84,32 @@ export class SolitaireManager extends Component {
             }
         }
         // the remaining is the stock
-        this.stockCards = slicedCards;
+        this.stockCards = this.stockCardsNode.children.map(card => card.getComponent(SolitaireCard));
+        this.stockInfo.string = `Number of Cards: ${this.stockCards.length}`;
+    }
+
+    getStock() {
+        if (this.stockCards.length == 0) {
+            const distance = this.stockCardsNode.getPosition().subtract(this.wasteCardsNode.getPosition());
+
+            this.stockCards = this.wasteCards;
+            this.wasteCards = [];
+
+            this.stockCards.forEach(card => {
+                card.slideFaceDownTo(distance, 0.3, this.stockCardsNode);
+            });
+        } else {
+            const popCard = this.stockCards.pop();
+            const distance = this.wasteCardsNode.getPosition().subtract(this.stockCardsNode.getPosition());
+
+            this.wasteCards.unshift(popCard);
+            popCard.slideFaceUpTo(distance, 0.3, this.wasteCardsNode);
+        }
+
+        this.scheduleOnce(() => {
+            this.getStockButton.interactable = true;
+        }, 0.3);
+        this.getStockButton.interactable = false;
         this.stockInfo.string = `Number of Cards: ${this.stockCards.length}`;
     }
 }
