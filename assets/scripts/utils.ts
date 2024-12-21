@@ -8,6 +8,8 @@ export const MAX_CARDS = 52;
 export const SUITS = ["spade", "diamond", "club", "heart"];
 export const VALUES = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"];
 export const ROYAL_VALUES = { "J": 11, "Q": 12, "K": 13, "A": 14 };
+export const BLACK_SUITS = ["spade", "club"];
+export const RED_SUITS = ["diamond", "heart"];
 
 export function getDeck(isMauBinh = false) {
     let deckOfCards = [];
