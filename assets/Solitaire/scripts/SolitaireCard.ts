@@ -51,18 +51,30 @@ export class SolitaireCard extends Component {
         this.enableEvent();
     }
 
+    showFaceUpAnim(time = 0.5) {
+        return tween(this.node)
+            .to(time / 2, { scale: v3(0, 1, 1) })
+            .call(() => this.showFaceUp())
+            .to(time / 2, { scale: v3(1, 1, 1) })
+    }
+
+    showFaceDownAnim(time = 0.5) {
+        return tween(this.node)
+            .to(time / 2, { scale: v3(0, 1, 1) })
+            .call(() => this.showFaceDown())
+            .to(time / 2, { scale: v3(1, 1, 1) })
+    }
+
     slideFaceUpTo(position, time, wasteHolder) {
         changeParent(this.node, wasteHolder);
         return new Promise<void>(resolve => {
             tween(this.node)
                 .parallel(
                     tween().by(time, { position }),
-                    tween(this.node)
-                        .to(time / 2, { scale: v3(0, 1, 1) })
-                        .call(() => this.showFaceUp())
-                        .to(time / 2, { scale: v3(1, 1, 1) })
+                    this.showFaceUpAnim(time)
                         .call(() => {
                             this.enableEvent();
+                            this.setOriginalPos(true);
                             resolve();
                         })
                 )
@@ -76,12 +88,10 @@ export class SolitaireCard extends Component {
             tween(this.node)
                 .parallel(
                     tween().by(time, { position }),
-                    tween(this.node)
-                        .to(time / 2, { scale: v3(0, 1, 1) })
-                        .call(() => this.showFaceDown())
-                        .to(time / 2, { scale: v3(1, 1, 1) })
+                    this.showFaceDownAnim(time)
                         .call(() => {
                             this.disableEvent();
+                            this.setOriginalPos(true);
                             resolve();
                         })
                 )
@@ -100,7 +110,7 @@ export class SolitaireCard extends Component {
         console.log(`click node ${this.node.name}`);
         if (!this._canDrag) return;
 
-        this.scheduleOnce(this._dragStart, 0.05);
+        this.scheduleOnce(this._dragStart, 0.01);
     }
 
     onTouchMove(event: EventTouch) {
@@ -144,13 +154,22 @@ export class SolitaireCard extends Component {
         })
     }
 
-    transferToPile(pileNode, childList) {
+    transferToPile(pileNode, childList = []) {
         const topCard = [...childList].shift();
         childList.push(this.node);
-        const worldPos = topCard.getComponent(UITransform).convertToWorldSpaceAR(v3(0, 0, 0));
+        let worldPos
+        if (topCard) {
+            worldPos = topCard.getComponent(UITransform).convertToWorldSpaceAR(v3(0, 0, 0));
+        } else {
+            worldPos = pileNode.getComponent(UITransform).convertToWorldSpaceAR(v3(0, 0, 0));
+        }
         const currWorldPos = this.node.getComponent(UITransform).convertToWorldSpaceAR(v3(0, 0, 0));
+        if (childList.length > 1) {
+            worldPos.y -= (childList.length - 1) * 44;
+        } else {
+            worldPos.y -= this.node.getComponent(UITransform).height / 2;
+        }
 
-        worldPos.y -= (childList.length - 1) * 44;
         const moveVec = worldPos.subtract(currWorldPos);
         this._parent = pileNode;
 
@@ -166,11 +185,16 @@ export class SolitaireCard extends Component {
         });
     }
 
-    setOriginalPos() {
-        this.node.once(Node.EventType.TRANSFORM_CHANGED, () => {
+    setOriginalPos(isForce = false) {
+        if (isForce) {
             this._originalPos = this.node.getPosition();
             this._originalWorldPos = this.node.getComponent(UITransform).convertToWorldSpaceAR(v3(0, 0, 0));
-        });
+        } else {
+            this.node.once(Node.EventType.TRANSFORM_CHANGED, () => {
+                this._originalPos = this.node.getPosition();
+                this._originalWorldPos = this.node.getComponent(UITransform).convertToWorldSpaceAR(v3(0, 0, 0));
+            });
+        }
     }
 
     enableEvent() {

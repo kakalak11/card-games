@@ -137,35 +137,50 @@ export class SolitaireManager extends Component {
     }
 
     onDragCardEnd(event: Event) {
-        // console.log(event);
         const dragCard: SolitaireCard = event.target.getComponent(SolitaireCard);
-        // console.log(dragCard);
         const intersectedPile = this.checkCardIntersection(event.target);
+        const cardStack = [dragCard, ...this._followCards];
         let allPromises = [];
+        let hasTransfer;
 
         if (intersectedPile) {
-            // console.log(intersectedPile);
             const topCard = intersectedPile.getComponentsInChildren(SolitaireCard).pop();
-            const isValidValue = (topCard.value - 1) == dragCard.value;
-            const isValidSuit = BLACK_SUITS.includes(topCard.suit) && RED_SUITS.includes(dragCard.suit)
-                || RED_SUITS.includes(topCard.suit) && BLACK_SUITS.includes(dragCard.suit);
+            let _childList = [...intersectedPile.children];
+            if (!topCard) {
+                const isValidValue = dragCard.valueName == "K";
 
-            if (isValidSuit && isValidValue) {
-                let _childList = [...intersectedPile.children];
-
-                [dragCard, ...this._followCards]
-                    .forEach(card => {
-                        allPromises.push(card.transferToPile(intersectedPile, _childList));
-                    });
+                if (isValidValue) {
+                    hasTransfer = true;
+                    cardStack
+                        .forEach(card => {
+                            allPromises.push(card.transferToPile(intersectedPile));
+                        });
+                } else {
+                    cardStack
+                        .forEach(card => {
+                            allPromises.push(card.returnCard());
+                        });
+                }
             } else {
-                [dragCard, ...this._followCards]
-                    .forEach(card => {
-                        allPromises.push(card.returnCard());
-                    });
-            }
+                const isValidValue = (topCard.value - 1) == dragCard.value;
+                const isValidSuit = BLACK_SUITS.includes(topCard.suit) && RED_SUITS.includes(dragCard.suit)
+                    || RED_SUITS.includes(topCard.suit) && BLACK_SUITS.includes(dragCard.suit);
 
+                if (isValidSuit && isValidValue) {
+                    hasTransfer = true;
+                    cardStack
+                        .forEach(card => {
+                            allPromises.push(card.transferToPile(intersectedPile, _childList));
+                        });
+                } else {
+                    cardStack
+                        .forEach(card => {
+                            allPromises.push(card.returnCard());
+                        });
+                }
+            }
         } else {
-            [dragCard, ...this._followCards]
+            cardStack
                 .forEach(card => {
                     allPromises.push(card.returnCard());
                 });
@@ -175,6 +190,7 @@ export class SolitaireManager extends Component {
             .then(() => {
                 this._followCards = [];
                 intersectedPile && this.displayChildrenName(intersectedPile);
+                if (hasTransfer) this.checkPiles();
             });
     }
 
@@ -203,9 +219,10 @@ export class SolitaireManager extends Component {
 
     isNodeIntersectWithTarget(node, dragTarget) {
         const dragTargetBoundingBox = dragTarget.getComponent(UITransform).getBoundingBoxToWorld();
-        const nodeBoundingBox = node.getComponent(UITransform).getBoundingBoxToWorld();
-        const isIntersectOverHalfX = Math.abs(dragTargetBoundingBox.x - nodeBoundingBox.x) <= node.getComponent(UITransform).width / 2;
-        const isIntersectOverHalfY = Math.abs(dragTargetBoundingBox.y - nodeBoundingBox.y) <= node.getComponent(UITransform).height / 2;
+        const nodeTransform = node.getComponent(UITransform);
+        const nodeBoundingBox = nodeTransform.getBoundingBoxToWorld();
+        const isIntersectOverHalfX = Math.abs(dragTargetBoundingBox.x - nodeBoundingBox.x) <= nodeTransform.width / 2;
+        const isIntersectOverHalfY = Math.abs(dragTargetBoundingBox.y - nodeBoundingBox.y) <= nodeTransform.height / 2;
 
         return isIntersectOverHalfX && isIntersectOverHalfY && Intersection2D.rectRect(dragTargetBoundingBox, nodeBoundingBox);
     }
@@ -215,9 +232,19 @@ export class SolitaireManager extends Component {
             if (!card.faceDown.active) {
                 return card.name;
             } else {
-                return null
+                return null;
             }
         }).filter(o => o));
+    }
+
+    checkPiles() {
+        this.tableau.children.forEach(pile => {
+            // check top card, if face down then reveal
+            const topCard = pile.getComponentsInChildren(SolitaireCard).pop();
+            if (topCard?.faceDown.active) {
+                topCard.showFaceUpAnim().start();
+            }
+        })
     }
 
 }
