@@ -9,7 +9,7 @@ const PACKAGE_NAME = 'custom-template-plugin';
 
 interface ITaskOptions extends IBuildTaskOption {
     packages: {
-        'custom-template-plugin': IOptions;
+        'kakalak-build-plugin': IOptions;
     };
 }
 

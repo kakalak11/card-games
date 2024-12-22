@@ -33,12 +33,16 @@ export class SolitaireCard extends Component {
     initCard(cardAsset, value, suit) {
         this._cardSprite.spriteFrame = cardAsset;
         this.valueName = value;
-        this.value = ROYAL_VALUES[value] || value;
+        this.value = value == "A" ? 1 : (ROYAL_VALUES[value] || Number(value));
         this.suit = suit;
         this._canDrag = true;
         this._originalPos = v3(0, 0, 0);
 
-        this.enableEvent();
+        this.initEvent();
+    }
+
+    isCardFromWaste() {
+        return this._parent.name.startsWith("WasteCards");
     }
 
     showFaceDown() {
@@ -75,6 +79,7 @@ export class SolitaireCard extends Component {
                         .call(() => {
                             this.enableEvent();
                             this.setOriginalPos(true);
+                            this._canDrag = true;
                             resolve();
                         })
                 )
@@ -92,6 +97,7 @@ export class SolitaireCard extends Component {
                         .call(() => {
                             this.disableEvent();
                             this.setOriginalPos(true);
+                            this._canDrag = false;
                             resolve();
                         })
                 )
@@ -185,6 +191,26 @@ export class SolitaireCard extends Component {
         });
     }
 
+    transferToFoundation(foundationNode, childList = []) {
+        let worldPos = foundationNode.getComponent(UITransform).convertToWorldSpaceAR(v3(0, 0, 0));
+        const currWorldPos = this.node.getComponent(UITransform).convertToWorldSpaceAR(v3(0, 0, 0));
+        worldPos.y += childList.length * 2;
+
+        const moveVec = worldPos.subtract(currWorldPos);
+        this._parent = foundationNode;
+
+        return new Promise<void>(resolve => {
+            tween(this.node)
+                .by(0.2, { position: moveVec })
+                .call(() => {
+                    changeParent(this.node, foundationNode);
+                    this.setOriginalPos();
+                    resolve();
+                })
+                .start();
+        });
+    }
+
     setOriginalPos(isForce = false) {
         if (isForce) {
             this._originalPos = this.node.getPosition();
@@ -197,16 +223,18 @@ export class SolitaireCard extends Component {
         }
     }
 
-    enableEvent() {
+    initEvent() {
         this.node.on(Node.EventType.TOUCH_START, this.onTouchStart, this);
         this.node.on(Node.EventType.TOUCH_END, this.onTouchEnd, this);
         this.node.on(Node.EventType.TOUCH_MOVE, this.onTouchMove, this);
     }
 
+    enableEvent() {
+        this.node.resumeSystemEvents(false);
+    }
+
     disableEvent() {
-        this.node.off(Node.EventType.TOUCH_START, this.onTouchStart, this);
-        this.node.off(Node.EventType.TOUCH_END, this.onTouchEnd, this);
-        this.node.off(Node.EventType.TOUCH_MOVE, this.onTouchMove, this);
+        this.node.pauseSystemEvents(false);
     }
 
 }

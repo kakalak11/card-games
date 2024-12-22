@@ -49,8 +49,6 @@ export class SolitaireManager extends Component {
         let deck = getDeck();
         // console.log(JSON.stringify(deck));
 
-        deck = JSON.parse(`[{"value":"2","suit":"heart","numberValue":2},{"value":"4","suit":"heart","numberValue":4},{"value":"K","suit":"spade","numberValue":10},{"value":"5","suit":"diamond","numberValue":5},{"value":"6","suit":"heart","numberValue":6},{"value":"A","suit":"spade","numberValue":10},{"value":"3","suit":"heart","numberValue":3},{"value":"8","suit":"heart","numberValue":8},{"value":"Q","suit":"heart","numberValue":10},{"value":"J","suit":"spade","numberValue":10},{"value":"8","suit":"diamond","numberValue":8},{"value":"9","suit":"diamond","numberValue":9},{"value":"5","suit":"spade","numberValue":5},{"value":"2","suit":"diamond","numberValue":2},{"value":"Q","suit":"spade","numberValue":10},{"value":"8","suit":"spade","numberValue":8},{"value":"6","suit":"spade","numberValue":6},{"value":"2","suit":"spade","numberValue":2},{"value":"7","suit":"club","numberValue":7},{"value":"9","suit":"spade","numberValue":9},{"value":"7","suit":"heart","numberValue":7},{"value":"4","suit":"club","numberValue":4},{"value":"7","suit":"diamond","numberValue":7},{"value":"A","suit":"diamond","numberValue":10},{"value":"J","suit":"club","numberValue":10},{"value":"K","suit":"diamond","numberValue":10},{"value":"3","suit":"diamond","numberValue":3},{"value":"4","suit":"spade","numberValue":4},{"value":"10","suit":"diamond","numberValue":10},{"value":"Q","suit":"diamond","numberValue":10},{"value":"J","suit":"diamond","numberValue":10},{"value":"7","suit":"spade","numberValue":7},{"value":"5","suit":"heart","numberValue":5},{"value":"9","suit":"club","numberValue":9},{"value":"3","suit":"spade","numberValue":3},{"value":"10","suit":"spade","numberValue":10},{"value":"K","suit":"club","numberValue":10},{"value":"9","suit":"heart","numberValue":9},{"value":"10","suit":"heart","numberValue":10},{"value":"6","suit":"club","numberValue":6},{"value":"8","suit":"club","numberValue":8},{"value":"6","suit":"diamond","numberValue":6},{"value":"10","suit":"club","numberValue":10},{"value":"J","suit":"club","numberValue":10},{"value":"3","suit":"club","numberValue":3},{"value":"A","suit":"club","numberValue":10},{"value":"A","suit":"heart","numberValue":10},{"value":"5","suit":"club","numberValue":5},{"value":"J","suit":"heart","numberValue":10},{"value":"K","suit":"heart","numberValue":10},{"value":"2","suit":"club","numberValue":2},{"value":"4","suit":"diamond","numberValue":4}]`);
-
         this.loadCards(deck)
             .then(cards => {
                 this.cards = cards;
@@ -70,12 +68,9 @@ export class SolitaireManager extends Component {
                         if (err) return reject(error(err.message));
 
                         const cardNode = instantiate(this.cardPrefab);
-                        cardNode.setParent(this.stockCardsNode);
                         cardNode.name = assetName;
-                        const cardComponent = cardNode.getComponent(SolitaireCard);
-                        cardComponent.initCard(asset, value, suit);
-                        cardComponent.showFaceDown();
-                        resolve(cardComponent);
+
+                        resolve({ cardNode, asset, value, suit });
                     });
                 })
             )
@@ -83,6 +78,13 @@ export class SolitaireManager extends Component {
 
         return Promise.all(allPromises)
             .then((result) => {
+                result = result.map(({ cardNode, asset, value, suit }) => {
+                    cardNode.setParent(this.stockCardsNode);
+                    const cardComponent = cardNode.getComponent(SolitaireCard);
+                    cardComponent.initCard(asset, value, suit);
+                    cardComponent.showFaceDown();
+                    return cardComponent;
+                })
                 return result;
             });
     }
@@ -108,13 +110,13 @@ export class SolitaireManager extends Component {
         }
         // the remaining is the stock
         this.stockCards = this.stockCardsNode.children.map(card => card.getComponent(SolitaireCard));
+        this.stockCardsNode.removeAllChildren();
         this.stockInfo.string = `Number of Cards: ${this.stockCards.length}`;
     }
 
     getStock() {
         if (this.stockCards.length == 0) {
             const distance = this.stockCardsNode.getPosition().subtract(this.wasteCardsNode.getPosition());
-
             this.stockCards = this.wasteCards;
             this.wasteCards = [];
 
@@ -140,43 +142,83 @@ export class SolitaireManager extends Component {
         const dragCard: SolitaireCard = event.target.getComponent(SolitaireCard);
         const intersectedPile = this.checkCardIntersection(event.target);
         const cardStack = [dragCard, ...this._followCards];
+        const isCardFromWaste = dragCard.isCardFromWaste();
         let allPromises = [];
         let hasTransfer;
 
         if (intersectedPile) {
+            const isFoundation = intersectedPile.name.startsWith("Foundation");
             const topCard = intersectedPile.getComponentsInChildren(SolitaireCard).pop();
             let _childList = [...intersectedPile.children];
-            if (!topCard) {
-                const isValidValue = dragCard.valueName == "K";
 
-                if (isValidValue) {
-                    hasTransfer = true;
-                    cardStack
-                        .forEach(card => {
-                            allPromises.push(card.transferToPile(intersectedPile));
-                        });
+            if (!topCard) {
+                const isValidSuit = intersectedPile.name.endsWith("_" + dragCard.suit);
+
+                if (isFoundation) {
+                    if (isValidSuit && dragCard.valueName == "A" && cardStack.length == 1) {
+                        hasTransfer = true;
+                        cardStack
+                            .forEach(card => {
+                                allPromises.push(card.transferToFoundation(intersectedPile, _childList));
+                            });
+                    } else {
+                        cardStack
+                            .forEach(card => {
+                                allPromises.push(card.returnCard());
+                            });
+                    }
                 } else {
-                    cardStack
-                        .forEach(card => {
-                            allPromises.push(card.returnCard());
-                        });
+                    if (dragCard.valueName == "K") {
+                        hasTransfer = true;
+                        cardStack
+                            .forEach(card => {
+                                allPromises.push(card.transferToPile(intersectedPile));
+                            });
+                    } else {
+                        cardStack
+                            .forEach(card => {
+                                allPromises.push(card.returnCard());
+                            });
+                    }
                 }
+
+
             } else {
-                const isValidValue = (topCard.value - 1) == dragCard.value;
-                const isValidSuit = BLACK_SUITS.includes(topCard.suit) && RED_SUITS.includes(dragCard.suit)
+                let isValidValue = (topCard.value - 1) == dragCard.value;
+                let isValidSuit = BLACK_SUITS.includes(topCard.suit) && RED_SUITS.includes(dragCard.suit)
                     || RED_SUITS.includes(topCard.suit) && BLACK_SUITS.includes(dragCard.suit);
 
-                if (isValidSuit && isValidValue) {
-                    hasTransfer = true;
-                    cardStack
-                        .forEach(card => {
-                            allPromises.push(card.transferToPile(intersectedPile, _childList));
-                        });
+                if (isFoundation) {
+                    isValidSuit = BLACK_SUITS.includes(topCard.suit) && BLACK_SUITS.includes(dragCard.suit)
+                        || RED_SUITS.includes(topCard.suit) && RED_SUITS.includes(dragCard.suit);
+                    isValidValue = (topCard.value + 1) == dragCard.value;
+
+                    if (isValidSuit && isValidValue) {
+                        hasTransfer = true;
+                        cardStack
+                            .forEach(card => {
+                                allPromises.push(card.transferToFoundation(intersectedPile, _childList));
+                            });
+                    } else {
+                        cardStack
+                            .forEach(card => {
+                                allPromises.push(card.returnCard());
+                            });
+                    }
+
                 } else {
-                    cardStack
-                        .forEach(card => {
-                            allPromises.push(card.returnCard());
-                        });
+                    if (isValidSuit && isValidValue) {
+                        hasTransfer = true;
+                        cardStack
+                            .forEach(card => {
+                                allPromises.push(card.transferToPile(intersectedPile, _childList));
+                            });
+                    } else {
+                        cardStack
+                            .forEach(card => {
+                                allPromises.push(card.returnCard());
+                            });
+                    }
                 }
             }
         } else {
@@ -190,7 +232,12 @@ export class SolitaireManager extends Component {
             .then(() => {
                 this._followCards = [];
                 intersectedPile && this.displayChildrenName(intersectedPile);
-                if (hasTransfer) this.checkPiles();
+                if (hasTransfer) {
+                    this.checkPiles();
+                    if (isCardFromWaste) {
+                        this.wasteCards.shift();
+                    }
+                }
             });
     }
 
@@ -212,7 +259,7 @@ export class SolitaireManager extends Component {
     }
 
     checkCardIntersection(dragTarget) {
-        return this.tableau.children.find(node => {
+        return [...this.tableau.children, ...this.foundations.children].find(node => {
             return this.isNodeIntersectWithTarget(node, dragTarget)
         });
     }
@@ -223,8 +270,8 @@ export class SolitaireManager extends Component {
         const nodeBoundingBox = nodeTransform.getBoundingBoxToWorld();
         const isIntersectOverHalfX = Math.abs(dragTargetBoundingBox.x - nodeBoundingBox.x) <= nodeTransform.width / 2;
         const isIntersectOverHalfY = Math.abs(dragTargetBoundingBox.y - nodeBoundingBox.y) <= nodeTransform.height / 2;
-
-        return isIntersectOverHalfX && isIntersectOverHalfY && Intersection2D.rectRect(dragTargetBoundingBox, nodeBoundingBox);
+        // isIntersectOverHalfX && isIntersectOverHalfY &&
+        return Intersection2D.rectRect(dragTargetBoundingBox, nodeBoundingBox);
     }
 
     displayChildrenName(node) {
