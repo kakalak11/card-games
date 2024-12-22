@@ -110,7 +110,6 @@ export class SolitaireManager extends Component {
         }
         // the remaining is the stock
         this.stockCards = this.stockCardsNode.children.map(card => card.getComponent(SolitaireCard));
-        this.stockCardsNode.removeAllChildren();
         this.stockInfo.string = `Number of Cards: ${this.stockCards.length}`;
     }
 
