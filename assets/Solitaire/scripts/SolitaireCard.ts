@@ -183,21 +183,12 @@ export class SolitaireCard extends Component {
         })
     }
 
-    transferToPile(pileNode, childList = []) {
-        const topCard = [...childList].shift();
-        childList.push(this.node);
-        let worldPos
-        if (topCard) {
-            worldPos = topCard.getComponent(UITransform).convertToWorldSpaceAR(v3(0, 0, 0));
-        } else {
-            worldPos = pileNode.getComponent(UITransform).convertToWorldSpaceAR(v3(0, 0, 0));
-        }
+    transferToPile(pileNode, childNum) {
+        let worldPos = pileNode.getComponent(UITransform).convertToWorldSpaceAR(v3(0, 0, 0));
+
         const currWorldPos = this.node.getComponent(UITransform).convertToWorldSpaceAR(v3(0, 0, 0));
-        if (childList.length > 1) {
-            worldPos.y -= (childList.length - 1) * 44;
-        } else {
-            worldPos.y -= this.node.getComponent(UITransform).height / 2;
-        }
+        worldPos.y -= this.node.getComponent(UITransform).height / 2;
+        worldPos.y -= childNum * 44;
 
         const moveVec = worldPos.subtract(currWorldPos);
         this._parent = pileNode;
@@ -216,10 +207,34 @@ export class SolitaireCard extends Component {
         });
     }
 
-    transferToFoundation(foundationNode, childList = []) {
-        let worldPos = foundationNode.getComponent(UITransform).convertToWorldSpaceAR(v3(0, 0, 0));
+    dealToPile(pileNode, childNum = 0, time, showFaceUp?) {
         const currWorldPos = this.node.getComponent(UITransform).convertToWorldSpaceAR(v3(0, 0, 0));
-        worldPos.y += childList.length * 2;
+        let worldPos = pileNode.getComponent(UITransform).convertToWorldSpaceAR(v3(0, 0, 0));
+        worldPos.y -= this.node.getComponent(UITransform).height / 2;
+        worldPos.y -= childNum * 44;
+
+        const moveVec = worldPos.subtract(currWorldPos);
+        this._parent = pileNode;
+        this.disableEvent();
+        tween(this.node)
+            .parallel(
+                tween().by(time, { position: moveVec }),
+                showFaceUp && tween()
+                    .to(time / 2, { scale: v3(0, 1, 1) })
+                    .call(() => this.showFaceUp())
+                    .to(time / 2, { scale: v3(1, 1, 1) })
+            )
+            .call(() => {
+                changeParent(this.node, pileNode);
+                this.setOriginalPos();
+            })
+            .start();
+    }
+
+    transferToFoundation(foundationNode, childNum) {
+        const currWorldPos = this.node.getComponent(UITransform).convertToWorldSpaceAR(v3(0, 0, 0));
+        let worldPos = foundationNode.getComponent(UITransform).convertToWorldSpaceAR(v3(0, 0, 0));
+        worldPos.y += childNum * 2;
 
         const moveVec = worldPos.subtract(currWorldPos);
         this._parent = foundationNode;
@@ -262,6 +277,19 @@ export class SolitaireCard extends Component {
 
     disableEvent() {
         this.node.pauseSystemEvents(false);
+    }
+
+    reset() {
+        this.node.setPosition(0, 0);
+        this._cardSprite.spriteFrame = null;
+        this.valueName = "";
+        this.value = 0
+        this.suit = "";
+        this._canDrag = true;
+        this._originalPos = v3(0, 0, 0);
+        this._originalWorldPos = v3(0, 0, 0);
+
+        return true;
     }
 
 }
