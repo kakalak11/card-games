@@ -109,7 +109,7 @@ export class SolitaireManager extends Component {
         for (let col = 0; col < tableauPiles.length; col++) {
 
             tweenDealCard
-                .delay(0.3)
+                .delay(0.1)
                 .call(() => {
                     poppedCard = slicedCards.pop();
                     changeParent(poppedCard.node, this.dragHolder);
@@ -122,7 +122,7 @@ export class SolitaireManager extends Component {
             for (let _col = col + 1; _col < tableauPiles.length; _col++) {
 
                 tweenDealCard
-                    .delay(0.3)
+                    .delay(0.1)
                     .call(() => {
                         poppedCard = slicedCards.pop();
                         changeParent(poppedCard.node, this.dragHolder);

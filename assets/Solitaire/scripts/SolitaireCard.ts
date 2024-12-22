@@ -212,10 +212,11 @@ export class SolitaireCard extends Component {
         let worldPos = pileNode.getComponent(UITransform).convertToWorldSpaceAR(v3(0, 0, 0));
         worldPos.y -= this.node.getComponent(UITransform).height / 2;
         worldPos.y -= childNum * 44;
-
         const moveVec = worldPos.subtract(currWorldPos);
+
         this._parent = pileNode;
         this.disableEvent();
+
         tween(this.node)
             .parallel(
                 tween().by(time, { position: moveVec }),
@@ -235,11 +236,11 @@ export class SolitaireCard extends Component {
         const currWorldPos = this.node.getComponent(UITransform).convertToWorldSpaceAR(v3(0, 0, 0));
         let worldPos = foundationNode.getComponent(UITransform).convertToWorldSpaceAR(v3(0, 0, 0));
         worldPos.y += childNum * 2;
-
         const moveVec = worldPos.subtract(currWorldPos);
-        this._parent = foundationNode;
 
+        this._parent = foundationNode;
         this.disableEvent();
+
         return new Promise<void>(resolve => {
             tween(this.node)
                 .by(0.2, { position: moveVec })
