@@ -39,10 +39,15 @@ export class SolitaireCard extends Component {
         this._originalPos = v3(0, 0, 0);
 
         this.initEvent();
+        this.node.once(Node.EventType.PARENT_CHANGED, () => this._parent = this.node.parent, this);
     }
 
     isCardFromWaste() {
         return this._parent.name.startsWith("WasteCards");
+    }
+
+    getParent() {
+        return this._parent;
     }
 
     showFaceDown() {
@@ -56,20 +61,29 @@ export class SolitaireCard extends Component {
     }
 
     showFaceUpAnim(time = 0.5) {
+        this.disableEvent();
         return tween(this.node)
             .to(time / 2, { scale: v3(0, 1, 1) })
             .call(() => this.showFaceUp())
             .to(time / 2, { scale: v3(1, 1, 1) })
+            .call(() => {
+                this.enableEvent();
+            })
     }
 
     showFaceDownAnim(time = 0.5) {
+        this.disableEvent();
         return tween(this.node)
             .to(time / 2, { scale: v3(0, 1, 1) })
             .call(() => this.showFaceDown())
             .to(time / 2, { scale: v3(1, 1, 1) })
+            .call(() => {
+                this.enableEvent();
+            })
     }
 
     slideFaceUpTo(position, time, wasteHolder) {
+        this.disableEvent();
         changeParent(this.node, wasteHolder);
         return new Promise<void>(resolve => {
             tween(this.node)
@@ -88,6 +102,7 @@ export class SolitaireCard extends Component {
     }
 
     slideFaceDownTo(position, time, stockHolder) {
+        this.disableEvent();
         changeParent(this.node, stockHolder);
         return new Promise<void>(resolve => {
             tween(this.node)
@@ -110,13 +125,14 @@ export class SolitaireCard extends Component {
         this._parent = this.node.parent;
         const dragBeginEvent = new Event("ON_DRAG_CARD_BEGIN", true);
         this.node.dispatchEvent(dragBeginEvent);
+        console.log("Drag");
     }
 
     onTouchStart(event: EventTouch) {
-        console.log(`click node ${this.node.name}`);
+        // console.log(`click node ${this.node.name}`);
         if (!this._canDrag) return;
 
-        this.scheduleOnce(this._dragStart, 0.01);
+        this.scheduleOnce(this._dragStart, 0.05);
     }
 
     onTouchMove(event: EventTouch) {
@@ -129,8 +145,13 @@ export class SolitaireCard extends Component {
     }
 
     onTouchEnd(event: EventTouch) {
-        this.unschedule(this._dragStart);
-        if (this._canDrag) return;
+        if (this._canDrag) {
+            this.unschedule(this._dragStart);
+            const tapEvent = new Event("ON_TAP_CARD", true);
+            this.node.dispatchEvent(tapEvent);
+            console.log("Tap");
+            return;
+        }
         this._canDrag = true;
 
         const dragEndEvent = new Event("ON_DRAG_CARD_END", true);
@@ -148,12 +169,14 @@ export class SolitaireCard extends Component {
     returnCard() {
         const currWorldPos = this.node.getComponent(UITransform).convertToWorldSpaceAR(v3(0, 0, 0));
         const moveVec = this._originalWorldPos.clone().subtract(currWorldPos);
+        this.disableEvent();
 
         return new Promise<void>(resolve => {
             tween(this.node)
                 .by(0.2, { position: moveVec })
                 .call(() => {
                     changeParent(this.node, this._parent);
+                    this.enableEvent();
                     resolve();
                 })
                 .start();
@@ -178,6 +201,7 @@ export class SolitaireCard extends Component {
 
         const moveVec = worldPos.subtract(currWorldPos);
         this._parent = pileNode;
+        this.disableEvent();
 
         return new Promise<void>(resolve => {
             tween(this.node)
@@ -185,6 +209,7 @@ export class SolitaireCard extends Component {
                 .call(() => {
                     changeParent(this.node, pileNode);
                     this.setOriginalPos();
+                    this.enableEvent();
                     resolve();
                 })
                 .start();
@@ -199,12 +224,14 @@ export class SolitaireCard extends Component {
         const moveVec = worldPos.subtract(currWorldPos);
         this._parent = foundationNode;
 
+        this.disableEvent();
         return new Promise<void>(resolve => {
             tween(this.node)
                 .by(0.2, { position: moveVec })
                 .call(() => {
                     changeParent(this.node, foundationNode);
                     this.setOriginalPos();
+                    this.enableEvent();
                     resolve();
                 })
                 .start();
