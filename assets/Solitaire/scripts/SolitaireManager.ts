@@ -59,7 +59,7 @@ export class SolitaireManager extends Component {
         let deck = getDeck();
         console.warn(JSON.stringify(deck));
         // deck = JSON.parse(`[{"value":"9","suit":"heart","numberValue":9},{"value":"7","suit":"heart","numberValue":7},{"value":"2","suit":"spade","numberValue":2},{"value":"K","suit":"club","numberValue":10},{"value":"5","suit":"diamond","numberValue":5},{"value":"10","suit":"club","numberValue":10},{"value":"Q","suit":"heart","numberValue":10},{"value":"8","suit":"club","numberValue":8},{"value":"6","suit":"spade","numberValue":6},{"value":"2","suit":"diamond","numberValue":2},{"value":"10","suit":"diamond","numberValue":10},{"value":"J","suit":"spade","numberValue":10},{"value":"A","suit":"diamond","numberValue":10},{"value":"7","suit":"diamond","numberValue":7},{"value":"Q","suit":"diamond","numberValue":10},{"value":"K","suit":"diamond","numberValue":10},{"value":"A","suit":"heart","numberValue":10},{"value":"10","suit":"heart","numberValue":10},{"value":"5","suit":"club","numberValue":5},{"value":"4","suit":"spade","numberValue":4},{"value":"A","suit":"club","numberValue":10},{"value":"3","suit":"diamond","numberValue":3},{"value":"10","suit":"spade","numberValue":10},{"value":"5","suit":"spade","numberValue":5},{"value":"8","suit":"heart","numberValue":8},{"value":"K","suit":"heart","numberValue":10},{"value":"8","suit":"spade","numberValue":8},{"value":"7","suit":"spade","numberValue":7},{"value":"9","suit":"diamond","numberValue":9},{"value":"J","suit":"club","numberValue":10},{"value":"6","suit":"heart","numberValue":6},{"value":"2","suit":"club","numberValue":2},{"value":"2","suit":"heart","numberValue":2},{"value":"4","suit":"club","numberValue":4},{"value":"J","suit":"heart","numberValue":10},{"value":"6","suit":"club","numberValue":6},{"value":"4","suit":"heart","numberValue":4},{"value":"3","suit":"heart","numberValue":3},{"value":"5","suit":"heart","numberValue":5},{"value":"Q","suit":"club","numberValue":10},{"value":"3","suit":"spade","numberValue":3},{"value":"3","suit":"club","numberValue":3},{"value":"9","suit":"club","numberValue":9},{"value":"7","suit":"club","numberValue":7},{"value":"4","suit":"diamond","numberValue":4},{"value":"6","suit":"diamond","numberValue":6},{"value":"Q","suit":"spade","numberValue":10},{"value":"9","suit":"spade","numberValue":9},{"value":"J","suit":"diamond","numberValue":10},{"value":"K","suit":"spade","numberValue":10},{"value":"8","suit":"diamond","numberValue":8},{"value":"A","suit":"spade","numberValue":10}]`)
-        deck = JSON.parse(`[{"value":"2","suit":"spade","numberValue":2},{"value":"8","suit":"club","numberValue":8},{"value":"6","suit":"heart","numberValue":6},{"value":"9","suit":"heart","numberValue":9},{"value":"6","suit":"spade","numberValue":6},{"value":"K","suit":"club","numberValue":10},{"value":"9","suit":"diamond","numberValue":9},{"value":"4","suit":"diamond","numberValue":4},{"value":"6","suit":"diamond","numberValue":6},{"value":"J","suit":"spade","numberValue":10},{"value":"10","suit":"spade","numberValue":10},{"value":"K","suit":"spade","numberValue":10},{"value":"6","suit":"club","numberValue":6},{"value":"7","suit":"heart","numberValue":7},{"value":"A","suit":"spade","numberValue":10},{"value":"Q","suit":"diamond","numberValue":10},{"value":"3","suit":"club","numberValue":3},{"value":"4","suit":"club","numberValue":4},{"value":"Q","suit":"club","numberValue":10},{"value":"10","suit":"diamond","numberValue":10},{"value":"2","suit":"diamond","numberValue":2},{"value":"A","suit":"club","numberValue":10},{"value":"7","suit":"spade","numberValue":7},{"value":"3","suit":"spade","numberValue":3},{"value":"8","suit":"diamond","numberValue":8},{"value":"2","suit":"heart","numberValue":2},{"value":"4","suit":"spade","numberValue":4},{"value":"4","suit":"heart","numberValue":4},{"value":"5","suit":"heart","numberValue":5},{"value":"10","suit":"club","numberValue":10},{"value":"Q","suit":"heart","numberValue":10},{"value":"5","suit":"spade","numberValue":5},{"value":"5","suit":"diamond","numberValue":5},{"value":"J","suit":"diamond","numberValue":10},{"value":"K","suit":"diamond","numberValue":10},{"value":"3","suit":"heart","numberValue":3},{"value":"K","suit":"heart","numberValue":10},{"value":"J","suit":"club","numberValue":10},{"value":"2","suit":"club","numberValue":2},{"value":"5","suit":"club","numberValue":5},{"value":"7","suit":"club","numberValue":7},{"value":"3","suit":"diamond","numberValue":3},{"value":"8","suit":"spade","numberValue":8},{"value":"8","suit":"heart","numberValue":8},{"value":"Q","suit":"spade","numberValue":10},{"value":"10","suit":"heart","numberValue":10},{"value":"J","suit":"heart","numberValue":10},{"value":"A","suit":"heart","numberValue":10},{"value":"7","suit":"diamond","numberValue":7},{"value":"9","suit":"club","numberValue":9},{"value":"9","suit":"spade","numberValue":9},{"value":"A","suit":"diamond","numberValue":10}]`)
+        // deck = JSON.parse(`[{"value":"2","suit":"spade","numberValue":2},{"value":"8","suit":"club","numberValue":8},{"value":"6","suit":"heart","numberValue":6},{"value":"9","suit":"heart","numberValue":9},{"value":"6","suit":"spade","numberValue":6},{"value":"K","suit":"club","numberValue":10},{"value":"9","suit":"diamond","numberValue":9},{"value":"4","suit":"diamond","numberValue":4},{"value":"6","suit":"diamond","numberValue":6},{"value":"J","suit":"spade","numberValue":10},{"value":"10","suit":"spade","numberValue":10},{"value":"K","suit":"spade","numberValue":10},{"value":"6","suit":"club","numberValue":6},{"value":"7","suit":"heart","numberValue":7},{"value":"A","suit":"spade","numberValue":10},{"value":"Q","suit":"diamond","numberValue":10},{"value":"3","suit":"club","numberValue":3},{"value":"4","suit":"club","numberValue":4},{"value":"Q","suit":"club","numberValue":10},{"value":"10","suit":"diamond","numberValue":10},{"value":"2","suit":"diamond","numberValue":2},{"value":"A","suit":"club","numberValue":10},{"value":"7","suit":"spade","numberValue":7},{"value":"3","suit":"spade","numberValue":3},{"value":"8","suit":"diamond","numberValue":8},{"value":"2","suit":"heart","numberValue":2},{"value":"4","suit":"spade","numberValue":4},{"value":"4","suit":"heart","numberValue":4},{"value":"5","suit":"heart","numberValue":5},{"value":"10","suit":"club","numberValue":10},{"value":"Q","suit":"heart","numberValue":10},{"value":"5","suit":"spade","numberValue":5},{"value":"5","suit":"diamond","numberValue":5},{"value":"J","suit":"diamond","numberValue":10},{"value":"K","suit":"diamond","numberValue":10},{"value":"3","suit":"heart","numberValue":3},{"value":"K","suit":"heart","numberValue":10},{"value":"J","suit":"club","numberValue":10},{"value":"2","suit":"club","numberValue":2},{"value":"5","suit":"club","numberValue":5},{"value":"7","suit":"club","numberValue":7},{"value":"3","suit":"diamond","numberValue":3},{"value":"8","suit":"spade","numberValue":8},{"value":"8","suit":"heart","numberValue":8},{"value":"Q","suit":"spade","numberValue":10},{"value":"10","suit":"heart","numberValue":10},{"value":"J","suit":"heart","numberValue":10},{"value":"A","suit":"heart","numberValue":10},{"value":"7","suit":"diamond","numberValue":7},{"value":"9","suit":"club","numberValue":9},{"value":"9","suit":"spade","numberValue":9},{"value":"A","suit":"diamond","numberValue":10}]`)
         this.loadCards(deck)
             .then(cards => {
                 this.cards = cards;
@@ -169,6 +169,11 @@ export class SolitaireManager extends Component {
 
             this.wasteCards.unshift(popCard);
             popCard.slideFaceUpTo(distance, time, this.wasteCardsNode);
+
+            const secondWasteCard = this.wasteCards[1];
+            secondWasteCard.moveAsideWaste(time);
+            const thirdWasteCard = this.wasteCards[2];
+            thirdWasteCard.moveAsideWaste(time);
         }
 
         this.scheduleOnce(() => {
@@ -250,7 +255,6 @@ export class SolitaireManager extends Component {
         Promise.all(allPromises)
             .then(() => {
                 this.followCards = [];
-                // intersectedPile && this.displayChildrenName(intersectedPile);
                 if (hasTransfer) {
                     this.checkPiles();
                     if (isCardFromWaste) {
@@ -328,16 +332,6 @@ export class SolitaireManager extends Component {
         const isIntersectOverHalfY = Math.abs(dragTargetBoundingBox.y - nodeBoundingBox.y) <= nodeTransform.height / 2;
         // isIntersectOverHalfX && isIntersectOverHalfY &&
         return Intersection2D.rectRect(dragTargetBoundingBox, nodeBoundingBox);
-    }
-
-    displayChildrenName(node) {
-        console.log(node.getComponentsInChildren(SolitaireCard).map(card => {
-            if (!card.faceDown.active) {
-                return card.name;
-            } else {
-                return null;
-            }
-        }).filter(o => o));
     }
 
     checkPiles() {

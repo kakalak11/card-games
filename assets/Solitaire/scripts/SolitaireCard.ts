@@ -93,7 +93,6 @@ export class SolitaireCard extends Component {
                         .call(() => {
                             this.enableEvent();
                             this.setOriginalPos(true);
-                            this._canDrag = true;
                             resolve();
                         })
                 )
@@ -110,9 +109,7 @@ export class SolitaireCard extends Component {
                     tween().by(time, { position }),
                     this.showFaceDownAnim(time)
                         .call(() => {
-                            this.disableEvent();
                             this.setOriginalPos(true);
-                            this._canDrag = false;
                             resolve();
                         })
                 )
@@ -252,6 +249,14 @@ export class SolitaireCard extends Component {
                 })
                 .start();
         });
+    }
+
+    moveAsideWaste(time) {
+        this.disableEvent();
+
+        tween(this.node)
+            .by(time, { position: v3(-50, 0, 0) })
+            .start();
     }
 
     setOriginalPos(isForce = false) {
