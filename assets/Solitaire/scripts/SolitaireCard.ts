@@ -1,5 +1,6 @@
 import { Sprite, UI } from 'cc';
 import { _decorator, Component, Node } from 'cc';
+import { changeParent, ROYAL_VALUES } from '../../scripts/utils';
 import { tween } from 'cc';
 import { v3 } from 'cc';
 import { EventTouch } from 'cc';
@@ -9,7 +10,6 @@ import { UIOpacity } from 'cc';
 import { UITransform } from 'cc';
 import { Size } from 'cc';
 import { Vec2 } from 'cc';
-import { changeParent, ROYAL_VALUES } from '../../scripts/utils';
 const { ccclass, property } = _decorator;
 
 const CARD_SCALE_FACTOR = 3 / 4;
@@ -129,10 +129,16 @@ export class SolitaireCard extends Component {
         })
     }
 
-    returnCard() {
+    returnCard(isImmediate?) {
         const currWorldPos = this.node.getComponent(UITransform).convertToWorldSpaceAR(v3(0, 0, 0));
         const moveVec = this._originalWorldPos.clone().subtract(currWorldPos);
         this.disableEvent();
+
+        if (isImmediate) {
+            changeParent(this.node, this._parent);
+            this.enableEvent();
+            return;
+        }
 
         return new Promise<void>(resolve => {
             tween(this.node)
@@ -257,6 +263,8 @@ export class SolitaireCard extends Component {
 
     /** Touch logic */
 
+    touchStart: Vec2;
+
     _dragStart() {
         this._canDrag = false;
         this._parent = this.node.parent;
@@ -285,7 +293,7 @@ export class SolitaireCard extends Component {
             const tapEvent = new Event("ON_TAP_CARD", true);
             this.node.dispatchEvent(tapEvent);
             console.log("Tap");
-        } else {
+        } else if (moveDistance >= MOVE_THRESHOLD) {
             const dragEndEvent = new Event("ON_DRAG_CARD_END", true);
             this.node.dispatchEvent(dragEndEvent);
         }

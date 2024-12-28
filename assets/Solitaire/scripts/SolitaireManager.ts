@@ -330,6 +330,8 @@ export class SolitaireManager extends Component {
             }
         } else if (availCard) {
             this.onDragCardEnd(event, availCard.node.parent, followCards);
+        } else {
+            tapCard.returnCard(true);
         }
     }
 
