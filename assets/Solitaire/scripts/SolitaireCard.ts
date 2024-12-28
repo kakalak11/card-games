@@ -1,6 +1,6 @@
-import { Sprite } from 'cc';
+import { Sprite, UI } from 'cc';
 import { _decorator, Component, Node } from 'cc';
-import { changeParent, ROYAL_VALUES } from '../../scripts/utils';
+import { changeParent, ROYAL_VALUES } from '../../Scripts/utils';
 import { tween } from 'cc';
 import { v3 } from 'cc';
 import { EventTouch } from 'cc';
@@ -8,7 +8,17 @@ import { Event } from 'cc';
 import { Vec3 } from 'cc';
 import { UIOpacity } from 'cc';
 import { UITransform } from 'cc';
+import { Size } from 'cc';
+import { Vec2 } from 'cc';
 const { ccclass, property } = _decorator;
+
+const CARD_SCALE_FACTOR = 3 / 4;
+const CARD_HEIGHT = 144 * CARD_SCALE_FACTOR, CARD_WIDTH = 100 * CARD_SCALE_FACTOR;
+const CARD_SPACING_Y = CARD_HEIGHT / 8;
+const CARD_FACE_UP_SPACING_Y = CARD_HEIGHT / 3.2;
+const CARD_SIZE = new Size(CARD_WIDTH, CARD_HEIGHT);
+
+const MOVE_THRESHOLD = 5;
 
 @ccclass('SolitaireCard')
 export class SolitaireCard extends Component {
@@ -37,6 +47,8 @@ export class SolitaireCard extends Component {
         this.suit = suit;
         this._canDrag = true;
         this._originalPos = v3(0, 0, 0);
+        this.getComponent(UITransform).setContentSize(CARD_SIZE);
+        this.faceDown.getComponent(UITransform).setContentSize(CARD_SIZE);
 
         this.initEvent();
         this.node.once(Node.EventType.PARENT_CHANGED, () => this._parent = this.node.parent, this);
@@ -82,17 +94,17 @@ export class SolitaireCard extends Component {
             })
     }
 
-    slideFaceUpTo(position, time, wasteHolder) {
+    slideFaceUpTo(moveVec, time, wasteHolder) {
         this.disableEvent();
-        changeParent(this.node, wasteHolder);
         return new Promise<void>(resolve => {
             tween(this.node)
                 .parallel(
-                    tween().by(time, { position }),
+                    tween().by(time, { position: moveVec }),
                     this.showFaceUpAnim(time)
                         .call(() => {
+                            changeParent(this.node, wasteHolder);
                             this.enableEvent();
-                            this.setOriginalPos(true);
+                            this.setOriginalPos();
                             resolve();
                         })
                 )
@@ -100,67 +112,21 @@ export class SolitaireCard extends Component {
         });
     }
 
-    slideFaceDownTo(position, time, stockHolder) {
+    slideFaceDownTo(moveVec, time, stockHolder) {
         this.disableEvent();
-        changeParent(this.node, stockHolder);
         return new Promise<void>(resolve => {
             tween(this.node)
                 .parallel(
-                    tween().by(time, { position }),
+                    tween().by(time, { position: moveVec }),
                     this.showFaceDownAnim(time)
                         .call(() => {
-                            this.setOriginalPos(true);
+                            changeParent(this.node, stockHolder);
+                            this.setOriginalPos();
                             resolve();
                         })
                 )
                 .start()
         })
-    }
-
-    _dragStart() {
-        this._canDrag = false;
-        this._parent = this.node.parent;
-        const dragBeginEvent = new Event("ON_DRAG_CARD_BEGIN", true);
-        this.node.dispatchEvent(dragBeginEvent);
-        console.log("Drag");
-    }
-
-    onTouchStart(event: EventTouch) {
-        // console.log(`click node ${this.node.name}`);
-        if (!this._canDrag) return;
-
-        this.scheduleOnce(this._dragStart, 0.05);
-    }
-
-    onTouchMove(event: EventTouch) {
-        if (this._canDrag) return;
-        this.follow(event);
-
-        const dragBeginEvent = new Event("ON_DRAG_CARD_MOVE", true);
-        dragBeginEvent["moveEvent"] = event;
-        this.node.dispatchEvent(dragBeginEvent);
-    }
-
-    onTouchEnd(event: EventTouch) {
-        if (this._canDrag) {
-            this.unschedule(this._dragStart);
-            const tapEvent = new Event("ON_TAP_CARD", true);
-            this.node.dispatchEvent(tapEvent);
-            console.log("Tap");
-            return;
-        }
-        this._canDrag = true;
-
-        const dragEndEvent = new Event("ON_DRAG_CARD_END", true);
-        this.node.dispatchEvent(dragEndEvent);
-    }
-
-    follow(event: EventTouch) {
-        const delta = event.getUIDelta();
-        const moveX = this.node.getPosition().x + delta.x;
-        const moveY = this.node.getPosition().y + delta.y;
-
-        this.node.setPosition(moveX, moveY);
     }
 
     returnCard() {
@@ -180,12 +146,11 @@ export class SolitaireCard extends Component {
         })
     }
 
-    transferToPile(pileNode, childNum) {
-        let worldPos = pileNode.getComponent(UITransform).convertToWorldSpaceAR(v3(0, 0, 0));
-
+    transferToPile(pileNode, countFaceDownChild, countFaceUpChild) {
         const currWorldPos = this.node.getComponent(UITransform).convertToWorldSpaceAR(v3(0, 0, 0));
-        worldPos.y -= this.node.getComponent(UITransform).height / 2;
-        worldPos.y -= childNum * 44;
+        let worldPos = pileNode.getComponent(UITransform).convertToWorldSpaceAR(v3(0, 0, 0));
+        worldPos.y -= countFaceDownChild * CARD_SPACING_Y;
+        worldPos.y -= countFaceUpChild * CARD_FACE_UP_SPACING_Y;
 
         const moveVec = worldPos.subtract(currWorldPos);
         this._parent = pileNode;
@@ -207,8 +172,7 @@ export class SolitaireCard extends Component {
     dealToPile(pileNode, childNum = 0, time, showFaceUp?) {
         const currWorldPos = this.node.getComponent(UITransform).convertToWorldSpaceAR(v3(0, 0, 0));
         let worldPos = pileNode.getComponent(UITransform).convertToWorldSpaceAR(v3(0, 0, 0));
-        worldPos.y -= this.node.getComponent(UITransform).height / 2;
-        worldPos.y -= childNum * 44;
+        worldPos.y -= childNum * CARD_SPACING_Y;
         const moveVec = worldPos.subtract(currWorldPos);
 
         this._parent = pileNode;
@@ -253,22 +217,15 @@ export class SolitaireCard extends Component {
 
     moveAsideWaste(time) {
         this.disableEvent();
-
+        const cardWidth = this.node.getComponent(UITransform).width;
         tween(this.node)
-            .by(time, { position: v3(-50, 0, 0) })
+            .by(time, { position: v3(-cardWidth / 2, 0, 0) })
             .start();
     }
 
-    setOriginalPos(isForce = false) {
-        if (isForce) {
-            this._originalPos = this.node.getPosition();
-            this._originalWorldPos = this.node.getComponent(UITransform).convertToWorldSpaceAR(v3(0, 0, 0));
-        } else {
-            this.node.once(Node.EventType.TRANSFORM_CHANGED, () => {
-                this._originalPos = this.node.getPosition();
-                this._originalWorldPos = this.node.getComponent(UITransform).convertToWorldSpaceAR(v3(0, 0, 0));
-            });
-        }
+    setOriginalPos() {
+        this._originalPos = this.node.getPosition();
+        this._originalWorldPos = this.node.getComponent(UITransform).convertToWorldSpaceAR(v3(0, 0, 0));
     }
 
     initEvent() {
@@ -296,6 +253,51 @@ export class SolitaireCard extends Component {
         this._originalWorldPos = v3(0, 0, 0);
 
         return true;
+    }
+
+    /** Touch logic */
+
+    _dragStart() {
+        this._canDrag = false;
+        this._parent = this.node.parent;
+        const dragBeginEvent = new Event("ON_DRAG_CARD_BEGIN", true);
+        this.node.dispatchEvent(dragBeginEvent);
+        console.log("Drag");
+    }
+
+    onTouchStart(event: EventTouch) {
+        if (!this._canDrag) return;
+        this._dragStart();
+    }
+
+    onTouchMove(event: EventTouch) {
+        if (this._canDrag) return;
+        this.follow(event);
+
+        const dragBeginEvent = new Event("ON_DRAG_CARD_MOVE", true);
+        dragBeginEvent["moveEvent"] = event;
+        this.node.dispatchEvent(dragBeginEvent);
+    }
+
+    onTouchEnd(event: EventTouch) {
+        const moveDistance = Vec2.distance(event.getUIStartLocation(), event.getUILocation());
+        if (moveDistance < MOVE_THRESHOLD) {
+            const tapEvent = new Event("ON_TAP_CARD", true);
+            this.node.dispatchEvent(tapEvent);
+            console.log("Tap");
+        } else {
+            const dragEndEvent = new Event("ON_DRAG_CARD_END", true);
+            this.node.dispatchEvent(dragEndEvent);
+        }
+        this._canDrag = true;
+    }
+
+    follow(event: EventTouch) {
+        const delta = event.getUIDelta();
+        const moveX = this.node.getPosition().x + delta.x;
+        const moveY = this.node.getPosition().y + delta.y;
+
+        this.node.setPosition(moveX, moveY);
     }
 
 }
