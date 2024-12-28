@@ -6,7 +6,7 @@ import { Sprite } from 'cc';
 import { SpriteFrame } from 'cc';
 import { _decorator, Component, Node } from 'cc';
 import { SolitaireCard } from './SolitaireCard';
-import { BLACK_SUITS, changeParent, getDeck, RED_SUITS } from "../../Scripts/utils"
+import { BLACK_SUITS, changeParent, getDeck, RED_SUITS } from "../../scripts/utils"
 import { Label } from 'cc';
 import { Button } from 'cc';
 import { Layout } from 'cc';

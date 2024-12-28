@@ -1,6 +1,5 @@
 import { Sprite, UI } from 'cc';
 import { _decorator, Component, Node } from 'cc';
-import { changeParent, ROYAL_VALUES } from '../../Scripts/utils';
 import { tween } from 'cc';
 import { v3 } from 'cc';
 import { EventTouch } from 'cc';
@@ -10,6 +9,7 @@ import { UIOpacity } from 'cc';
 import { UITransform } from 'cc';
 import { Size } from 'cc';
 import { Vec2 } from 'cc';
+import { changeParent, ROYAL_VALUES } from '../../scripts/utils';
 const { ccclass, property } = _decorator;
 
 const CARD_SCALE_FACTOR = 3 / 4;
