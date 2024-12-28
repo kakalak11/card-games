@@ -301,7 +301,7 @@ export class SolitaireManager extends Component {
 
     onTapCard(event: Event) {
         // auto-play the possible move
-        const tapCard = event.target.getComponent(SolitaireCard);
+        const tapCard: SolitaireCard = event.target.getComponent(SolitaireCard);
         const isFoundation = tapCard.getParent().name.startsWith("Foundation");
         // const isWaste = tapCard.getParent().name.startsWith("WasteCards");
         const isPile = tapCard.getParent().name.startsWith("Pile");
@@ -332,6 +332,7 @@ export class SolitaireManager extends Component {
             this.onDragCardEnd(event, availCard.node.parent, followCards);
         } else {
             tapCard.returnCard(true);
+            tapCard.shake();
         }
     }
 

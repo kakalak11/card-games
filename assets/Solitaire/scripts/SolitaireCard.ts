@@ -229,6 +229,32 @@ export class SolitaireCard extends Component {
             .start();
     }
 
+    shake() {
+        const node = this.node;
+        let duration = 0.16, distance = 10, repeat = 1;
+        if (!node["originalPos"]) node["originalPos"] = node.getPosition();
+        const dur = duration / 8;
+        const shake = tween()
+            .by(dur, { position: v3(distance, 0) })
+            .by(dur, { position: v3(-distance, 0) })
+            .by(dur, { position: v3(-distance, 0) })
+            .by(dur, { position: v3(distance, 0) })
+            .call(() => {
+                node.setPosition(node["originalPos"]);
+                node["tweenShake"] = null;
+            })
+        const tweenShake = tween(node).repeat(repeat, shake);
+        if (node["tweenShake"]) {
+            node["tweenShake"].stop();
+            node.setPosition(node["originalPos"]);
+        }
+        node["tweenShake"] = tweenShake;
+        node["tweenShake"].start();
+
+        return tweenShake;
+
+    }
+
     setOriginalPos() {
         this._originalPos = this.node.getPosition();
         this._originalWorldPos = this.node.getComponent(UITransform).convertToWorldSpaceAR(v3(0, 0, 0));
