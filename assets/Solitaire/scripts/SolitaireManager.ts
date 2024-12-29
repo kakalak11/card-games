@@ -336,7 +336,7 @@ export class SolitaireManager extends Component {
                 }
                 this.updateTableauHeight();
                 const allTabCards = this.tableau.getComponentsInChildren(SolitaireCard);
-                const isRevealAllCards = allTabCards.filter(card => !card.faceDown.active).length >= allTabCards.length - 1;
+                const isRevealAllCards = allTabCards.filter(card => !card.faceDown.active).length == allTabCards.length - 1;
                 if (this.foundations.children.every(pile => pile.children.length == 13)) {
                     // Win game
                 } else if (isRevealAllCards && !this._isAuto) {
@@ -519,6 +519,7 @@ export class SolitaireManager extends Component {
 
     showAutoResolveButton() {
         this.autoResolveButton.node.active = true;
+        this.cards.forEach(card => card.disableEvent());
 
         tween(this.autoResolveButton.node)
             .repeatForever(
