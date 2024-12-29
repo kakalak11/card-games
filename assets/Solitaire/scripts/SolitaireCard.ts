@@ -58,8 +58,12 @@ export class SolitaireCard extends Component {
         return this._parent.name.startsWith("WasteCards");
     }
 
-    getParent() {
+    getCardParent() {
         return this._parent;
+    }
+
+    setCardParent(parent) {
+        return this._parent = parent;
     }
 
     showFaceDown() {
