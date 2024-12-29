@@ -310,8 +310,10 @@ export class SolitaireManager extends Component {
         // get available cards, which are the piles or the foundation top card.
         const availCard = [...this.foundations.children, ...this.tableau.children]
             .map(pile => {
+                if (tapCard.getParent() === pile) return;
                 return pile.children.slice().pop()?.getComponent(SolitaireCard);
-            }).filter(o => o)
+            })
+            .filter(o => o)
             .find(card => {
                 return this.isValidMove(tapCard, card);
             });
