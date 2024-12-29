@@ -18,6 +18,8 @@ import { tween } from 'cc';
 import { DebugMode } from 'cc';
 import { game } from 'cc';
 import { Tween } from 'cc';
+import { UIOpacity } from 'cc';
+import { BlockInputEvents } from 'cc';
 
 const { ccclass, property } = _decorator;
 const CARD_SCALE_FACTOR = 3 / 4;
@@ -211,6 +213,9 @@ export class SolitaireManager extends Component {
         this.stockCards = [];
         this.wasteCards = [];
         this.followCards = [];
+        this._isAuto = false;
+        this.hideAutoResolveButton();
+        this.hideWinCutscene();
 
         this.scheduleOnce(() => this.start(), 0.5);
     }
@@ -339,6 +344,7 @@ export class SolitaireManager extends Component {
                 const isRevealAllCards = allTabCards.filter(card => !card.faceDown.active).length == allTabCards.length - 1;
                 if (this.foundations.children.every(pile => pile.children.length == 13)) {
                     // Win game
+                    this.showWinCutscene();
                 } else if (isRevealAllCards && !this._isAuto) {
                     this.showAutoResolveButton();
                 } else if (this._isAuto) {
@@ -462,9 +468,6 @@ export class SolitaireManager extends Component {
         // Feature: auto-solve when all the face down card in the tableau is revealed
         // find possible move from tableau to foundation
         this._isAuto = true;
-        // this.scheduleOnce(() => {
-        //     this.onAutoPlay();
-        // }, 0.2);
 
         for (let col = 0; col < this.tableau.children.length; col++) {
             const tabPile = this.tableau.children[col]
@@ -533,5 +536,22 @@ export class SolitaireManager extends Component {
     hideAutoResolveButton() {
         this.autoResolveButton.node.active = false;
         Tween.stopAllByTarget(this.autoResolveButton.node);
+    }
+
+    showWinCutscene() {
+        this.winScene.active = true;
+        this.winScene.getComponent(UIOpacity).opacity = 0;
+        this.winScene.getComponentInChildren(BlockInputEvents).enabled = false;
+
+        tween(this.winScene.getComponent(UIOpacity))
+            .to(0.5, { opacity: 255 })
+            .call(() => {
+                this.winScene.getComponentInChildren(BlockInputEvents).enabled = true;
+            })
+            .start();
+    }
+
+    hideWinCutscene() {
+        this.winScene.active = false;
     }
 }
