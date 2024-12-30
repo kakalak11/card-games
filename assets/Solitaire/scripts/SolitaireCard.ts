@@ -30,6 +30,8 @@ export class SolitaireCard extends Component {
     _originalPos: Vec3;
     _originalWorldPos: Vec3;
     _parent: Node;
+    _oldParent: any;
+    _sibIndex: number;
 
     value: number;
     suit: string;
@@ -51,7 +53,10 @@ export class SolitaireCard extends Component {
         this.faceDown.getComponent(UITransform).setContentSize(CARD_SIZE);
 
         this.initEvent();
-        this.node.once(Node.EventType.PARENT_CHANGED, () => this._parent = this.node.parent, this);
+        this.node.once(Node.EventType.PARENT_CHANGED, () => {
+            this._parent = this.node.parent;
+            this._sibIndex = this.node.getSiblingIndex();
+        }, this);
     }
 
     isCardFromWaste() {
@@ -76,7 +81,7 @@ export class SolitaireCard extends Component {
         this.enableEvent();
     }
 
-    showFaceUpAnim(time = 0.5) {
+    showFaceUpAnim(time = 0.5, callback?) {
         this.disableEvent();
         return tween(this.node)
             .to(time / 2, { scale: v3(0, 1, 1) })
@@ -84,6 +89,7 @@ export class SolitaireCard extends Component {
             .to(time / 2, { scale: v3(1, 1, 1) })
             .call(() => {
                 this.enableEvent();
+                callback && callback();
             })
     }
 

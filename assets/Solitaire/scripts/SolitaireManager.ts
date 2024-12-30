@@ -20,12 +20,15 @@ import { game } from 'cc';
 import { Tween } from 'cc';
 import { UIOpacity } from 'cc';
 import { BlockInputEvents } from 'cc';
+import { DataStorage } from '../../../@types/packages/scene/@types/cce/utils/ipc/utils';
+import { sys } from 'cc';
 
 const { ccclass, property } = _decorator;
 const CARD_SCALE_FACTOR = 3 / 4;
 const CARD_HEIGHT = 144 * CARD_SCALE_FACTOR, CARD_WIDTH = 100 * CARD_SCALE_FACTOR;
 const CARD_SPACING_Y = CARD_HEIGHT / 8;
 const CARD_FACE_UP_SPACING_Y = CARD_HEIGHT / 3.2;
+const SESSION_KEY = Date.now();
 
 
 @ccclass('SolitaireManager')
@@ -46,14 +49,17 @@ export class SolitaireManager extends Component {
 
     @property(Node) winScene: Node;
     @property(Button) autoResolveButton: Button;
+    @property(Button) undoButton: Button;
+    @property(BlockInputEvents) blockAll: BlockInputEvents;
 
     cards: SolitaireCard[] = [];
     stockCards: SolitaireCard[] = [];
     wasteCards: SolitaireCard[] = [];
-
     followCards: SolitaireCard[] = [];
+
     _poolCard: NodePool = new NodePool();
     _isAuto: boolean;
+    _sessionData: any[] = [];
 
     protected onLoad(): void {
         this.node.on("ON_DRAG_CARD_END", this.onDragCardEnd, this);
@@ -69,7 +75,7 @@ export class SolitaireManager extends Component {
     protected start(): void {
         let deck = getDeck();
         console.warn(JSON.stringify(deck));
-        // deck = JSON.parse(`[{"value":"8","suit":"diamond","numberValue":8},{"value":"Q","suit":"heart","numberValue":10},{"value":"9","suit":"club","numberValue":9},{"value":"A","suit":"spade","numberValue":10},{"value":"Q","suit":"club","numberValue":10},{"value":"K","suit":"heart","numberValue":10},{"value":"10","suit":"club","numberValue":10},{"value":"2","suit":"heart","numberValue":2},{"value":"K","suit":"diamond","numberValue":10},{"value":"4","suit":"spade","numberValue":4},{"value":"5","suit":"club","numberValue":5},{"value":"5","suit":"heart","numberValue":5},{"value":"4","suit":"club","numberValue":4},{"value":"3","suit":"spade","numberValue":3},{"value":"J","suit":"club","numberValue":10},{"value":"2","suit":"diamond","numberValue":2},{"value":"A","suit":"diamond","numberValue":10},{"value":"J","suit":"spade","numberValue":10},{"value":"5","suit":"diamond","numberValue":5},{"value":"K","suit":"spade","numberValue":10},{"value":"10","suit":"diamond","numberValue":10},{"value":"6","suit":"heart","numberValue":6},{"value":"7","suit":"spade","numberValue":7},{"value":"8","suit":"heart","numberValue":8},{"value":"6","suit":"spade","numberValue":6},{"value":"9","suit":"diamond","numberValue":9},{"value":"5","suit":"spade","numberValue":5},{"value":"Q","suit":"diamond","numberValue":10},{"value":"Q","suit":"spade","numberValue":10},{"value":"A","suit":"heart","numberValue":10},{"value":"2","suit":"club","numberValue":2},{"value":"7","suit":"club","numberValue":7},{"value":"6","suit":"diamond","numberValue":6},{"value":"4","suit":"heart","numberValue":4},{"value":"9","suit":"heart","numberValue":9},{"value":"4","suit":"diamond","numberValue":4},{"value":"2","suit":"spade","numberValue":2},{"value":"3","suit":"heart","numberValue":3},{"value":"J","suit":"diamond","numberValue":10},{"value":"6","suit":"club","numberValue":6},{"value":"8","suit":"club","numberValue":8},{"value":"7","suit":"diamond","numberValue":7},{"value":"J","suit":"heart","numberValue":10},{"value":"K","suit":"club","numberValue":10},{"value":"9","suit":"spade","numberValue":9},{"value":"8","suit":"spade","numberValue":8},{"value":"7","suit":"heart","numberValue":7},{"value":"10","suit":"spade","numberValue":10},{"value":"3","suit":"diamond","numberValue":3},{"value":"10","suit":"heart","numberValue":10},{"value":"A","suit":"club","numberValue":10},{"value":"3","suit":"club","numberValue":3}]`)
+        deck = JSON.parse(`[{"value":"8","suit":"diamond","numberValue":8},{"value":"Q","suit":"heart","numberValue":10},{"value":"9","suit":"club","numberValue":9},{"value":"A","suit":"spade","numberValue":10},{"value":"Q","suit":"club","numberValue":10},{"value":"K","suit":"heart","numberValue":10},{"value":"10","suit":"club","numberValue":10},{"value":"2","suit":"heart","numberValue":2},{"value":"K","suit":"diamond","numberValue":10},{"value":"4","suit":"spade","numberValue":4},{"value":"5","suit":"club","numberValue":5},{"value":"5","suit":"heart","numberValue":5},{"value":"4","suit":"club","numberValue":4},{"value":"3","suit":"spade","numberValue":3},{"value":"J","suit":"club","numberValue":10},{"value":"2","suit":"diamond","numberValue":2},{"value":"A","suit":"diamond","numberValue":10},{"value":"J","suit":"spade","numberValue":10},{"value":"5","suit":"diamond","numberValue":5},{"value":"K","suit":"spade","numberValue":10},{"value":"10","suit":"diamond","numberValue":10},{"value":"6","suit":"heart","numberValue":6},{"value":"7","suit":"spade","numberValue":7},{"value":"8","suit":"heart","numberValue":8},{"value":"6","suit":"spade","numberValue":6},{"value":"9","suit":"diamond","numberValue":9},{"value":"5","suit":"spade","numberValue":5},{"value":"Q","suit":"diamond","numberValue":10},{"value":"Q","suit":"spade","numberValue":10},{"value":"A","suit":"heart","numberValue":10},{"value":"2","suit":"club","numberValue":2},{"value":"7","suit":"club","numberValue":7},{"value":"6","suit":"diamond","numberValue":6},{"value":"4","suit":"heart","numberValue":4},{"value":"9","suit":"heart","numberValue":9},{"value":"4","suit":"diamond","numberValue":4},{"value":"2","suit":"spade","numberValue":2},{"value":"3","suit":"heart","numberValue":3},{"value":"J","suit":"diamond","numberValue":10},{"value":"6","suit":"club","numberValue":6},{"value":"8","suit":"club","numberValue":8},{"value":"7","suit":"diamond","numberValue":7},{"value":"J","suit":"heart","numberValue":10},{"value":"K","suit":"club","numberValue":10},{"value":"9","suit":"spade","numberValue":9},{"value":"8","suit":"spade","numberValue":8},{"value":"7","suit":"heart","numberValue":7},{"value":"10","suit":"spade","numberValue":10},{"value":"3","suit":"diamond","numberValue":3},{"value":"10","suit":"heart","numberValue":10},{"value":"A","suit":"club","numberValue":10},{"value":"3","suit":"club","numberValue":3}]`)
         // deck = JSON.parse(`[{"value":"A","suit":"club","numberValue":10},{"value":"10","suit":"heart","numberValue":10},{"value":"6","suit":"spade","numberValue":6},{"value":"5","suit":"club","numberValue":5},{"value":"J","suit":"spade","numberValue":10},{"value":"4","suit":"heart","numberValue":4},{"value":"J","suit":"club","numberValue":10},{"value":"J","suit":"diamond","numberValue":10},{"value":"9","suit":"diamond","numberValue":9},{"value":"9","suit":"spade","numberValue":9},{"value":"K","suit":"spade","numberValue":10},{"value":"10","suit":"club","numberValue":10},{"value":"3","suit":"diamond","numberValue":3},{"value":"2","suit":"club","numberValue":2},{"value":"A","suit":"spade","numberValue":10},{"value":"2","suit":"diamond","numberValue":2},{"value":"7","suit":"club","numberValue":7},{"value":"7","suit":"heart","numberValue":7},{"value":"10","suit":"spade","numberValue":10},{"value":"6","suit":"diamond","numberValue":6},{"value":"7","suit":"diamond","numberValue":7},{"value":"7","suit":"spade","numberValue":7},{"value":"5","suit":"diamond","numberValue":5},{"value":"A","suit":"diamond","numberValue":10},{"value":"Q","suit":"heart","numberValue":10},{"value":"J","suit":"heart","numberValue":10},{"value":"4","suit":"club","numberValue":4},{"value":"K","suit":"heart","numberValue":10},{"value":"3","suit":"spade","numberValue":3},{"value":"4","suit":"diamond","numberValue":4},{"value":"9","suit":"club","numberValue":9},{"value":"5","suit":"heart","numberValue":5},{"value":"3","suit":"club","numberValue":3},{"value":"4","suit":"spade","numberValue":4},{"value":"8","suit":"spade","numberValue":8},{"value":"3","suit":"heart","numberValue":3},{"value":"Q","suit":"spade","numberValue":10},{"value":"Q","suit":"diamond","numberValue":10},{"value":"5","suit":"spade","numberValue":5},{"value":"Q","suit":"club","numberValue":10},{"value":"2","suit":"spade","numberValue":2},{"value":"K","suit":"club","numberValue":10},{"value":"6","suit":"heart","numberValue":6},{"value":"10","suit":"diamond","numberValue":10},{"value":"2","suit":"heart","numberValue":2},{"value":"6","suit":"club","numberValue":6},{"value":"K","suit":"diamond","numberValue":10},{"value":"8","suit":"diamond","numberValue":8},{"value":"9","suit":"heart","numberValue":9},{"value":"8","suit":"club","numberValue":8},{"value":"A","suit":"heart","numberValue":10},{"value":"8","suit":"heart","numberValue":8}]`)
         // deck = JSON.parse(`[{"value":"9","suit":"heart","numberValue":9},{"value":"7","suit":"heart","numberValue":7},{"value":"2","suit":"spade","numberValue":2},{"value":"K","suit":"club","numberValue":10},{"value":"5","suit":"diamond","numberValue":5},{"value":"10","suit":"club","numberValue":10},{"value":"Q","suit":"heart","numberValue":10},{"value":"8","suit":"club","numberValue":8},{"value":"6","suit":"spade","numberValue":6},{"value":"2","suit":"diamond","numberValue":2},{"value":"10","suit":"diamond","numberValue":10},{"value":"J","suit":"spade","numberValue":10},{"value":"A","suit":"diamond","numberValue":10},{"value":"7","suit":"diamond","numberValue":7},{"value":"Q","suit":"diamond","numberValue":10},{"value":"K","suit":"diamond","numberValue":10},{"value":"A","suit":"heart","numberValue":10},{"value":"10","suit":"heart","numberValue":10},{"value":"5","suit":"club","numberValue":5},{"value":"4","suit":"spade","numberValue":4},{"value":"A","suit":"club","numberValue":10},{"value":"3","suit":"diamond","numberValue":3},{"value":"10","suit":"spade","numberValue":10},{"value":"5","suit":"spade","numberValue":5},{"value":"8","suit":"heart","numberValue":8},{"value":"K","suit":"heart","numberValue":10},{"value":"8","suit":"spade","numberValue":8},{"value":"7","suit":"spade","numberValue":7},{"value":"9","suit":"diamond","numberValue":9},{"value":"J","suit":"club","numberValue":10},{"value":"6","suit":"heart","numberValue":6},{"value":"2","suit":"club","numberValue":2},{"value":"2","suit":"heart","numberValue":2},{"value":"4","suit":"club","numberValue":4},{"value":"J","suit":"heart","numberValue":10},{"value":"6","suit":"club","numberValue":6},{"value":"4","suit":"heart","numberValue":4},{"value":"3","suit":"heart","numberValue":3},{"value":"5","suit":"heart","numberValue":5},{"value":"Q","suit":"club","numberValue":10},{"value":"3","suit":"spade","numberValue":3},{"value":"3","suit":"club","numberValue":3},{"value":"9","suit":"club","numberValue":9},{"value":"7","suit":"club","numberValue":7},{"value":"4","suit":"diamond","numberValue":4},{"value":"6","suit":"diamond","numberValue":6},{"value":"Q","suit":"spade","numberValue":10},{"value":"9","suit":"spade","numberValue":9},{"value":"J","suit":"diamond","numberValue":10},{"value":"K","suit":"spade","numberValue":10},{"value":"8","suit":"diamond","numberValue":8},{"value":"A","suit":"spade","numberValue":10}]`)
         // deck = JSON.parse(`[{"value":"2","suit":"spade","numberValue":2},{"value":"8","suit":"club","numberValue":8},{"value":"6","suit":"heart","numberValue":6},{"value":"9","suit":"heart","numberValue":9},{"value":"6","suit":"spade","numberValue":6},{"value":"K","suit":"club","numberValue":10},{"value":"9","suit":"diamond","numberValue":9},{"value":"4","suit":"diamond","numberValue":4},{"value":"6","suit":"diamond","numberValue":6},{"value":"J","suit":"spade","numberValue":10},{"value":"10","suit":"spade","numberValue":10},{"value":"K","suit":"spade","numberValue":10},{"value":"6","suit":"club","numberValue":6},{"value":"7","suit":"heart","numberValue":7},{"value":"A","suit":"spade","numberValue":10},{"value":"Q","suit":"diamond","numberValue":10},{"value":"3","suit":"club","numberValue":3},{"value":"4","suit":"club","numberValue":4},{"value":"Q","suit":"club","numberValue":10},{"value":"10","suit":"diamond","numberValue":10},{"value":"2","suit":"diamond","numberValue":2},{"value":"A","suit":"club","numberValue":10},{"value":"7","suit":"spade","numberValue":7},{"value":"3","suit":"spade","numberValue":3},{"value":"8","suit":"diamond","numberValue":8},{"value":"2","suit":"heart","numberValue":2},{"value":"4","suit":"spade","numberValue":4},{"value":"4","suit":"heart","numberValue":4},{"value":"5","suit":"heart","numberValue":5},{"value":"10","suit":"club","numberValue":10},{"value":"Q","suit":"heart","numberValue":10},{"value":"5","suit":"spade","numberValue":5},{"value":"5","suit":"diamond","numberValue":5},{"value":"J","suit":"diamond","numberValue":10},{"value":"K","suit":"diamond","numberValue":10},{"value":"3","suit":"heart","numberValue":3},{"value":"K","suit":"heart","numberValue":10},{"value":"J","suit":"club","numberValue":10},{"value":"2","suit":"club","numberValue":2},{"value":"5","suit":"club","numberValue":5},{"value":"7","suit":"club","numberValue":7},{"value":"3","suit":"diamond","numberValue":3},{"value":"8","suit":"spade","numberValue":8},{"value":"8","suit":"heart","numberValue":8},{"value":"Q","suit":"spade","numberValue":10},{"value":"10","suit":"heart","numberValue":10},{"value":"J","suit":"heart","numberValue":10},{"value":"A","suit":"heart","numberValue":10},{"value":"7","suit":"diamond","numberValue":7},{"value":"9","suit":"club","numberValue":9},{"value":"9","suit":"spade","numberValue":9},{"value":"A","suit":"diamond","numberValue":10}]`)
@@ -80,6 +86,7 @@ export class SolitaireManager extends Component {
                 this.gameStart();
                 // this.gameStartTestAutoPlay();
                 this.updateTableauHeight();
+                this.undoButton.interactable = this._sessionData.length > 0;
             });
     }
 
@@ -149,16 +156,19 @@ export class SolitaireManager extends Component {
 
             }
         }
+        this.blockAll.enabled = true;
+        getStockBtn.interactable = false;
         tweenDealCard
             .call(() => {
                 this.cards.forEach(card => card.setOriginalPos());
                 this.cards.filter(card => !card?.faceDown.active).forEach(card => card.enableEvent());
                 this.stockCards = this.stockCardsNode.children.map(card => card.getComponent(SolitaireCard));
+                this.stockCards.forEach(card => card?.setCardParent?.(this.stockCardsNode));
                 stockInfo.string = `Number of Cards: ${this.stockCards.length}`;
                 getStockBtn.interactable = true;
+                this.blockAll.enabled = false;
             })
             .start();
-        getStockBtn.interactable = false;
     }
 
     gameStartTestAutoPlay() {
@@ -224,6 +234,9 @@ export class SolitaireManager extends Component {
         const time = 0.2;
         const stockWorldPos = this.stockCardsNode.getComponent(UITransform).convertToWorldSpaceAR(v3(0, 0, 0));
         const wasteWorldPos = this.wasteCardsNode.getComponent(UITransform).convertToWorldSpaceAR(v3(0, 0, 0));
+        let popCard;
+        let fromParent;
+
         if (this.stockCards.length == 0) {
 
             const moveVec = stockWorldPos.subtract(wasteWorldPos);
@@ -234,8 +247,9 @@ export class SolitaireManager extends Component {
                 card.slideFaceDownTo(moveVec, time, this.stockCardsNode);
             });
         } else {
-            const popCard = this.stockCards.pop();
             const moveVec = wasteWorldPos.subtract(stockWorldPos);
+            popCard = this.stockCards.pop();
+            fromParent = popCard?.getCardParent()?.name;
 
             this.wasteCards.unshift(popCard);
             popCard.slideFaceUpTo(moveVec, time, this.wasteCardsNode);
@@ -248,6 +262,7 @@ export class SolitaireManager extends Component {
 
         this.scheduleOnce(() => {
             this.getStockButton.interactable = true;
+            this.storeMoveData(popCard, fromParent);
         }, time);
         this.getStockButton.interactable = false;
         this.stockInfo.string = `Number of Cards: ${this.stockCards.length}`;
@@ -259,6 +274,7 @@ export class SolitaireManager extends Component {
         const _followCards = followCards || this.followCards
         const cardStack: SolitaireCard[] = [dragCard, ..._followCards];
         const isCardFromWaste = dragCard.isCardFromWaste();
+        const fromParent = dragCard?.getCardParent()?.name;
         let allPromises = [];
         let hasTransfer;
 
@@ -330,15 +346,18 @@ export class SolitaireManager extends Component {
             allPromises.push(..._returnCard());
         }
 
+        if (hasTransfer) {
+            allPromises.push(...this.revealTopCardEachPile());
+            if (isCardFromWaste) {
+                this.wasteCards.shift();
+            }
+        }
+
         Promise.all(allPromises)
             .then(() => {
+                this.storeMoveData(dragCard, fromParent);
+
                 this.followCards = [];
-                if (hasTransfer) {
-                    this.revealTopCardEachPile();
-                    if (isCardFromWaste) {
-                        this.wasteCards.shift();
-                    }
-                }
                 this.updateTableauHeight();
                 const allTabCards = this.tableau.getComponentsInChildren(SolitaireCard);
                 const isRevealAllCards = allTabCards.filter(card => !card.faceDown.active).length == allTabCards.length - 1;
@@ -358,16 +377,17 @@ export class SolitaireManager extends Component {
 
         if (currPile) {
             this.followCards = currPile.children.slice(event.target.getSiblingIndex() + 1).map(o => o.getComponent(SolitaireCard));
-            changeParent(event.target, this.dragHolder);
-            this.followCards.forEach(card => changeParent(card.node, this.dragHolder));
         } else {
-            changeParent(event.target, this.dragHolder);
+            // changeParent(event.target, this.dragHolder);
         }
     }
 
     onDragCardMove(event: Event) {
         if (event["moveEvent"] && this.followCards.length > 0) {
             this.followCards.forEach(card => card.follow(event["moveEvent"]));
+
+            changeParent(event.target, this.dragHolder);
+            this.followCards.forEach(card => changeParent(card.node, this.dragHolder));
         }
     }
 
@@ -407,6 +427,7 @@ export class SolitaireManager extends Component {
         } else {
             tapCard.returnCard(true);
             tapCard.shake();
+            this.followCards = [];
         }
     }
 
@@ -427,13 +448,17 @@ export class SolitaireManager extends Component {
     }
 
     revealTopCardEachPile() {
+        let allPromises = [];
         this.tableau.children.forEach(pile => {
             // check top card, if face down then reveal
             const topCard = pile.getComponentsInChildren(SolitaireCard).pop();
             if (topCard?.faceDown.active) {
-                topCard.showFaceUpAnim().start();
+                allPromises.push(new Promise(resolve => {
+                    topCard.showFaceUpAnim(undefined, resolve).start();
+                }))
             }
-        })
+        });
+        return allPromises;
     }
 
     isValidMove(currCard: SolitaireCard, targetCard: SolitaireCard) {
@@ -553,5 +578,87 @@ export class SolitaireManager extends Component {
 
     hideWinCutscene() {
         this.winScene.active = false;
+    }
+
+    storeMoveData(target?: SolitaireCard, fromParent = "") {
+
+        try {
+            let data = { fromParent, toParent: target?.node.parent.name, targetName: target?.node.name };
+
+            this._sessionData.push(data);
+            sys.localStorage.setItem(SESSION_KEY, JSON.stringify(this._sessionData));
+        } catch (err) {
+            throw new Error(err);
+        }
+
+        this.undoButton.interactable = this._sessionData.length > 0;
+    }
+
+    onUndo() {
+        const data = this._sessionData.pop();
+        const targetCard = this.cards.find(card => card.node.name == data.targetName);
+        const allChildren = [...this.tableau.children, ...this.foundations.children, this.stockCardsNode, this.wasteCardsNode];
+        const fromParent = allChildren.find(node => node.name == data.fromParent);
+        const toParent = allChildren.find(node => node.name == data.toParent);
+
+        let allPromises = [];
+        let endStock;
+
+        if (!fromParent) {
+            // this move is the end of stock pile, return all stock cards to the waste pile
+            this.wasteCards = this.stockCards;
+            this.stockCards = [];
+
+            this.wasteCards.forEach(card => {
+                card?.showFaceUpAnim(0.2).start();
+                allPromises.push(card?.transferToPile(this.wasteCardsNode, 0, 0));
+            });
+            endStock = true;
+        } else if (fromParent.name.startsWith("Pile_")) {
+            const allFaceUp = fromParent.getComponentsInChildren(SolitaireCard)?.filter(card => !card?.faceDown?.active);
+            const isPrevTopCard = allFaceUp.length == 1;
+            let faceDownNums = fromParent.children.length - allFaceUp.length;
+
+            if (isPrevTopCard) {
+                const currTopCard = allFaceUp.pop();
+                currTopCard?.showFaceDownAnim(0.2)?.start();
+                faceDownNums++;
+            }
+            let faceUpNums = allFaceUp.length;
+            const followCards = toParent.children.slice(targetCard.node.getSiblingIndex() + 1).map(o => o.getComponent(SolitaireCard));
+
+            [targetCard, ...followCards].forEach(card => {
+                changeParent(card.node, this.dragHolder);
+                allPromises.push(card?.transferToPile(fromParent, faceDownNums, faceUpNums));
+                faceUpNums++;
+            });
+        } else if (fromParent === this.wasteCardsNode) {
+            this.wasteCards.unshift(targetCard);
+
+            changeParent(targetCard.node, this.dragHolder);
+            allPromises.push(targetCard?.transferToPile(fromParent, 0, 0));
+        } else if (fromParent === this.stockCardsNode) {
+            this.stockCards.push(targetCard);
+            this.wasteCards.shift();
+
+            changeParent(targetCard.node, this.dragHolder);
+            targetCard?.showFaceDownAnim(0.2).start();
+            allPromises.push(targetCard?.transferToPile(fromParent, 0, 0));
+        }
+        this.blockAll.enabled = true;
+        Promise.all(allPromises)
+            .then(() => {
+                if (endStock) {
+                    [...this.wasteCards].reverse().forEach((card, index) => card.node.setSiblingIndex(index));
+                }
+                this.blockAll.enabled = false;
+                this.stockInfo.string = `Number of Cards: ${this.stockCards.length}`;
+                this.undoButton.interactable = this._sessionData.length > 0;
+                sys.localStorage.setItem(SESSION_KEY, JSON.stringify(this._sessionData));
+            });
+    }
+
+    protected onDestroy(): void {
+        sys.localStorage.removeItem(SESSION_KEY);
     }
 }
