@@ -52,6 +52,10 @@ export class SolitaireManager extends Component {
     @property(Button) undoButton: Button;
     @property(BlockInputEvents) blockAll: BlockInputEvents;
 
+    @property(Label) moveInfoLabel: Label;
+    @property(Label) scoreInfoLabel: Label;
+    @property(Label) timeInfoLabel: Label;
+
     cards: SolitaireCard[] = [];
     stockCards: SolitaireCard[] = [];
     wasteCards: SolitaireCard[] = [];
@@ -60,6 +64,8 @@ export class SolitaireManager extends Component {
     _poolCard: NodePool = new NodePool();
     _isAuto: boolean;
     _sessionData: any[] = [];
+    _score: number = 0;
+    _updateTime: () => void;
 
     protected onLoad(): void {
         this.node.on("ON_DRAG_CARD_END", this.onDragCardEnd, this);
@@ -140,7 +146,7 @@ export class SolitaireManager extends Component {
                     changeParent(poppedCard.node, this.dragHolder);
                     poppedCard.dealToPile(tableauPiles[col], temp[col], 0.4, true);
                     temp[col]++;
-                    stockInfo.string = `Number of Cards: ${slicedCards.length}`;
+                    stockInfo.string = slicedCards.length.toString();
                 })
 
             for (let _col = col + 1; _col < tableauPiles.length; _col++) {
@@ -151,7 +157,7 @@ export class SolitaireManager extends Component {
                         changeParent(poppedCard.node, this.dragHolder);
                         poppedCard.dealToPile(tableauPiles[_col], temp[_col], 0.4);
                         temp[_col]++;
-                        stockInfo.string = `Number of Cards: ${slicedCards.length}`;
+                        stockInfo.string = slicedCards.length.toString();
                     })
 
             }
@@ -164,9 +170,10 @@ export class SolitaireManager extends Component {
                 this.cards.filter(card => !card?.faceDown.active).forEach(card => card.enableEvent());
                 this.stockCards = this.stockCardsNode.children.map(card => card.getComponent(SolitaireCard));
                 this.stockCards.forEach(card => card?.setCardParent?.(this.stockCardsNode));
-                stockInfo.string = `Number of Cards: ${this.stockCards.length}`;
+                stockInfo.string = `${this.stockCards.length}`;
                 getStockBtn.interactable = true;
                 this.blockAll.enabled = false;
+                this.startTimer();
             })
             .start();
     }
@@ -190,7 +197,7 @@ export class SolitaireManager extends Component {
                         changeParent(poppedCard.node, this.dragHolder);
                         poppedCard.dealToPile(tableauPiles[col], temp[col], 0.2);
                         temp[col]++;
-                        stockInfo.string = `Number of Cards: ${slicedCards.length}`;
+                        stockInfo.string = slicedCards.length.toString();
                     })
             }
             tweenDealCard
@@ -200,7 +207,7 @@ export class SolitaireManager extends Component {
                     changeParent(poppedCard.node, this.dragHolder);
                     poppedCard.dealToPile(tableauPiles[col], temp[col], 0.2, true);
                     temp[col]++;
-                    stockInfo.string = `Number of Cards: ${slicedCards.length}`;
+                    stockInfo.string = slicedCards.length.toString();
                 })
         }
         tweenDealCard
@@ -210,7 +217,7 @@ export class SolitaireManager extends Component {
                 this.stockCards = this.stockCardsNode.children.map(card => card.getComponent(SolitaireCard));
                 this.stockCards.forEach(card => card.setCardParent(this.stockCardsNode));
 
-                stockInfo.string = `Number of Cards: ${this.stockCards.length}`;
+                stockInfo.string = this.stockCards.length.toString();
                 getStockBtn.interactable = true;
             })
             .start();
@@ -224,8 +231,11 @@ export class SolitaireManager extends Component {
         this.wasteCards = [];
         this.followCards = [];
         this._isAuto = false;
+        this._score = 0;
+
         this.hideAutoResolveButton();
         this.hideWinCutscene();
+        this.unschedule(this._updateTime);
 
         this.scheduleOnce(() => this.start(), 0.5);
     }
@@ -265,7 +275,7 @@ export class SolitaireManager extends Component {
             this.storeMoveData(popCard, fromParent);
         }, time);
         this.getStockButton.interactable = false;
-        this.stockInfo.string = `Number of Cards: ${this.stockCards.length}`;
+        this.stockInfo.string = `${this.stockCards.length}`;
     }
 
     onDragCardEnd(event: Event, targetPile?, followCards?) {
@@ -275,8 +285,10 @@ export class SolitaireManager extends Component {
         const cardStack: SolitaireCard[] = [dragCard, ..._followCards];
         const isCardFromWaste = dragCard.isCardFromWaste();
         const fromParent = dragCard?.getCardParent()?.name;
+
         let allPromises = [];
         let hasTransfer;
+        let score = this._score;
 
         if (dragCard.node.parent !== this.dragHolder) {
             changeParent(dragCard.node, this.dragHolder);
@@ -294,6 +306,7 @@ export class SolitaireManager extends Component {
             let countFaceUpChild = intersectedPile.children.filter(card => !card.getComponent(SolitaireCard).faceDown.active).length;
 
             function _transferToFoundation() {
+                score += 10;
                 return cardStack.map(card => {
                     let promise = card.transferToFoundation(intersectedPile, countFaceDownChild + countFaceUpChild);
                     countFaceUpChild++;
@@ -302,6 +315,7 @@ export class SolitaireManager extends Component {
             }
 
             function _transferToTableau() {
+                if (fromParent.startsWith("WasteCards")) score += 5;
                 return cardStack.map(card => {
                     let promise = card.transferToPile(intersectedPile, countFaceDownChild, countFaceUpChild);
                     countFaceUpChild++;
@@ -347,14 +361,23 @@ export class SolitaireManager extends Component {
         }
 
         if (hasTransfer) {
-            allPromises.push(...this.revealTopCardEachPile());
+            let revealPromises = this.revealTopCardEachPile()
+            allPromises.push(...revealPromises);
+
+            if (revealPromises.length > 0) score += 5;
             if (isCardFromWaste) {
                 this.wasteCards.shift();
             }
         }
+        if (fromParent.startsWith("Foundation")) {
+            score -= 15;
+        }
 
         Promise.all(allPromises)
             .then(() => {
+                this._score = score;
+                this.scoreInfoLabel.string = this._score.toString();
+
                 if (hasTransfer) {
                     this.storeMoveData(dragCard, fromParent);
                 }
@@ -362,6 +385,7 @@ export class SolitaireManager extends Component {
                 this.updateTableauHeight();
                 const allTabCards = this.tableau.getComponentsInChildren(SolitaireCard);
                 const isRevealAllCards = allTabCards.filter(card => !card.faceDown.active).length == allTabCards.length - 1;
+
                 if (this.foundations.children.every(pile => pile.children.length == 13)) {
                     // Win game
                     this.showWinCutscene();
@@ -495,6 +519,7 @@ export class SolitaireManager extends Component {
         // Feature: auto-solve when all the face down card in the tableau is revealed
         // find possible move from tableau to foundation
         this._isAuto = true;
+        this.unschedule(this._updateTime);
 
         for (let col = 0; col < this.tableau.children.length; col++) {
             const tabPile = this.tableau.children[col]
@@ -585,7 +610,7 @@ export class SolitaireManager extends Component {
     storeMoveData(target?: SolitaireCard, fromParent = "") {
 
         try {
-            let data = { fromParent, toParent: target?.node.parent.name, targetName: target?.node.name };
+            let data = { fromParent, toParent: target?.node.parent.name, targetName: target?.node.name, score: this._score };
 
             this._sessionData.push(data);
             sys.localStorage.setItem(SESSION_KEY, JSON.stringify(this._sessionData));
@@ -594,6 +619,7 @@ export class SolitaireManager extends Component {
         }
 
         this.undoButton.interactable = this._sessionData.length > 0;
+        this.moveInfoLabel.string = this._sessionData.length.toString();
     }
 
     onUndo() {
@@ -606,6 +632,7 @@ export class SolitaireManager extends Component {
         let allPromises = [];
         let endStock;
 
+        if (data.score) this.scoreInfoLabel.string = data.score.toString();
         if (!fromParent) {
             // this move is the end of stock pile, return all stock cards to the waste pile
             this.wasteCards = this.stockCards;
@@ -648,16 +675,34 @@ export class SolitaireManager extends Component {
             allPromises.push(targetCard?.transferToPile(fromParent, 0, 0));
         }
         this.blockAll.enabled = true;
+        this.undoButton.interactable = false;
         Promise.all(allPromises)
             .then(() => {
                 if (endStock) {
                     [...this.wasteCards].reverse().forEach((card, index) => card.node.setSiblingIndex(index));
                 }
                 this.blockAll.enabled = false;
-                this.stockInfo.string = `Number of Cards: ${this.stockCards.length}`;
+                this.stockInfo.string = `${this.stockCards.length}`;
                 this.undoButton.interactable = this._sessionData.length > 0;
+                this.moveInfoLabel.string = this._sessionData.length.toString();
                 sys.localStorage.setItem(SESSION_KEY, JSON.stringify(this._sessionData));
             });
+    }
+
+    startTimer() {
+        let seconds = 0;
+        let minutes = 0;
+
+        this._updateTime = () => {
+            seconds++;
+            if (seconds >= 60) {
+                seconds = 0;
+                minutes++;
+            }
+            this.timeInfoLabel.string = `${minutes >= 10 ? "" : "0"}${minutes}:${seconds >= 10 ? "" : "0"}${seconds}`;
+        }
+
+        this.schedule(this._updateTime, 1);
     }
 
     protected onDestroy(): void {
