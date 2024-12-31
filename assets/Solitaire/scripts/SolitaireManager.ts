@@ -398,7 +398,7 @@ export class SolitaireManager extends Component {
         const isFoundation = tapCard.getCardParent().name.startsWith("Foundation");
         // const isWaste = tapCard.getCardParent().name.startsWith("WasteCards");
         const isPile = tapCard.getCardParent().name.startsWith("Pile");
-        const followCards = isPile && event.target.parent.children.slice(event.target.getSiblingIndex() + 1).map(o => o.getComponent(SolitaireCard));
+        const followCards: SolitaireCard[] = isPile && event.target.parent.children.slice(event.target.getSiblingIndex() + 1).map(o => o.getComponent(SolitaireCard));
 
         // get available cards, which are the piles or the foundation top card.
         const availCard = [...this.foundations.children, ...this.tableau.children]
@@ -428,6 +428,7 @@ export class SolitaireManager extends Component {
         } else {
             tapCard.returnCard(true);
             tapCard.shake();
+            followCards && followCards.forEach(card => card.returnCard(true));
             this.followCards = [];
         }
     }
