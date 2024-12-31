@@ -244,8 +244,9 @@ export class SolitaireManager extends Component {
         const time = 0.2;
         const stockWorldPos = this.stockCardsNode.getComponent(UITransform).convertToWorldSpaceAR(v3(0, 0, 0));
         const wasteWorldPos = this.wasteCardsNode.getComponent(UITransform).convertToWorldSpaceAR(v3(0, 0, 0));
-        let popCard;
+        let popCard: SolitaireCard;
         let fromParent;
+        let allPromises = [];
 
         if (this.stockCards.length == 0) {
 
@@ -254,7 +255,8 @@ export class SolitaireManager extends Component {
             this.wasteCards = [];
 
             this.stockCards.forEach(card => {
-                card.slideFaceDownTo(moveVec, time, this.stockCardsNode);
+                allPromises.push(card.slideFaceDownTo(moveVec, time, this.stockCardsNode));
+                card.setCardParent(this.stockCardsNode);
             });
         } else {
             const moveVec = wasteWorldPos.subtract(stockWorldPos);
@@ -262,7 +264,7 @@ export class SolitaireManager extends Component {
             fromParent = popCard?.getCardParent()?.name;
 
             this.wasteCards.unshift(popCard);
-            popCard.slideFaceUpTo(moveVec, time, this.wasteCardsNode);
+            allPromises.push(popCard.slideFaceUpTo(moveVec, time, this.wasteCardsNode));
 
             // const secondWasteCard = this.wasteCards[1];
             // secondWasteCard?.moveAsideWaste(time);
@@ -270,12 +272,13 @@ export class SolitaireManager extends Component {
             // thirdWasteCard?.moveAsideWaste(time);
         }
 
-        this.scheduleOnce(() => {
-            this.getStockButton.interactable = true;
-            this.storeMoveData(popCard, fromParent);
-        }, time);
         this.getStockButton.interactable = false;
         this.stockInfo.string = `${this.stockCards.length}`;
+        Promise.all(allPromises)
+            .then(() => {
+                this.getStockButton.interactable = true;
+                this.storeMoveData(popCard, fromParent);
+            });
     }
 
     onDragCardEnd(event: Event, targetPile?, followCards?) {
