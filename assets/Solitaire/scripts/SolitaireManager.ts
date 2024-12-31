@@ -355,8 +355,9 @@ export class SolitaireManager extends Component {
 
         Promise.all(allPromises)
             .then(() => {
-                this.storeMoveData(dragCard, fromParent);
-
+                if (hasTransfer) {
+                    this.storeMoveData(dragCard, fromParent);
+                }
                 this.followCards = [];
                 this.updateTableauHeight();
                 const allTabCards = this.tableau.getComponentsInChildren(SolitaireCard);
