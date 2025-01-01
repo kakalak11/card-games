@@ -437,8 +437,12 @@ export class SolitaireManager extends Component {
             .find(card => {
                 return this.isValidMove(tapCard, card);
             });
-
+        const canTransfer = availCard &&
+            ((!availCard.node.parent.name.startsWith("Foundation") && followCards.length >= 0)
+                || (availCard.node.parent.name.startsWith("Foundation") && followCards.length == 0));
         const foundationPile = [...this.foundations.children].find(foundPile => foundPile.name.endsWith("_" + tapCard.suit));
+
+
         if (tapCard.valueName == "A" && !isFoundation) {
             const foundationPile = [...this.foundations.children].find(foundPile => foundPile.name.endsWith("_" + tapCard.suit));
             this.onDragCardEnd(event, foundationPile);
@@ -450,7 +454,7 @@ export class SolitaireManager extends Component {
             } else if (availPile) {
                 this.onDragCardEnd(event, availPile, followCards);
             }
-        } else if (availCard) {
+        } else if (canTransfer) {
             this.onDragCardEnd(event, availCard.node.parent, followCards);
         } else {
             tapCard.returnCard(true);
