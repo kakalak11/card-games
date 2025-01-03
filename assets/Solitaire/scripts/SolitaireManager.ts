@@ -413,11 +413,11 @@ export class SolitaireManager extends Component {
     }
 
     onDragCardMove(event: Event) {
-        if (event["moveEvent"] && this.followCards.length > 0) {
-            this.followCards.forEach(card => card.follow(event["moveEvent"]));
-
+        if (event["moveEvent"]) {
+            
+            if (this.followCards.length > 0) this.followCards.forEach(card => card.follow(event["moveEvent"]));
             changeParent(event.target, this.dragHolder);
-            this.followCards.forEach(card => changeParent(card.node, this.dragHolder));
+            if (this.followCards.length > 0) this.followCards.forEach(card => changeParent(card.node, this.dragHolder));
         }
     }
 
