@@ -190,7 +190,7 @@
     "_priority": 0,
     "_fov": 45,
     "_fovAxis": 0,
-    "_orthoHeight": 428.1743227326266,
+    "_orthoHeight": 360,
     "_near": 0,
     "_far": 1000,
     "_color": {
@@ -396,7 +396,7 @@
     "__prefab": null,
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 80.05479792402826,
+      "width": 80.05859375,
       "height": 50.4
     },
     "_anchorPoint": {
@@ -429,7 +429,7 @@
     "_string": "99%",
     "_horizontalAlign": 1,
     "_verticalAlign": 1,
-    "_actualFontSize": 53.0625,
+    "_actualFontSize": 40,
     "_fontSize": 40,
     "_fontFamily": "Arial",
     "_lineHeight": 40,
@@ -903,7 +903,7 @@
     "_string": "Start",
     "_horizontalAlign": 1,
     "_verticalAlign": 1,
-    "_actualFontSize": 26.53125,
+    "_actualFontSize": 20,
     "_fontSize": 20,
     "_fontFamily": "Arial",
     "_lineHeight": 40,
@@ -1148,7 +1148,7 @@
     "__prefab": null,
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 498.98054325966825,
+      "width": 499.0028811203868,
       "height": 151.2
     },
     "_anchorPoint": {
@@ -1181,7 +1181,7 @@
     "_string": "Solitaire",
     "_horizontalAlign": 1,
     "_verticalAlign": 1,
-    "_actualFontSize": 159.1875,
+    "_actualFontSize": 120,
     "_fontSize": 120,
     "_fontFamily": "Arial",
     "_lineHeight": 120,
