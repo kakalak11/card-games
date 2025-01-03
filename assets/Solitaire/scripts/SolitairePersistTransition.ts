@@ -76,20 +76,18 @@ export class SolitairePersistTransition extends Component {
                     .delay(time)
             )
             .call(() => {
-                console.log("Done");
-
                 this.node.removeFromParent();
                 director.addPersistRootNode(this.node);
-                this.node.once(Node.EventType.SCENE_CHANGED_FOR_PERSISTS, () => {
-                    console.log(this.node);
+
+                director.loadScene("Solitaire", () => {
                     this.node.setParent(this.node.scene.getChildByName("Canvas"));
                     tween(this.node.addComponent(UIOpacity))
                         .to(0.3, { opacity: 0 })
+                        .call(() => {
+                            director.removePersistRootNode(this.node);
+                            this.node.destroy();
+                        })
                         .start();
-                });
-                director.loadScene("Solitaire", () => {
-                    director.removePersistRootNode(this.node);
-                    this.node.destroy();
                 });
             })
             .start()
